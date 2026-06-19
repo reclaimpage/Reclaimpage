@@ -1,11 +1,5 @@
-
 import { Navigation } from "@/components/Navigation";
-import { Hero } from "@/components/Hero";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
-import { FlowSection } from "@/components/FlowSection";
-import { Roadmap } from "@/components/Roadmap";
-import { Architecture } from "@/components/Architecture";
-import { RoutingTool } from "@/components/RoutingTool";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -21,12 +15,7 @@ export default function Home() {
       <div className="relative z-10">
         <Navigation />
         <main>
-          <Hero />
           <AdvantageGrid />
-          <FlowSection />
-          <RoutingTool />
-          <Roadmap />
-          <Architecture />
         </main>
         <Footer />
       </div>
