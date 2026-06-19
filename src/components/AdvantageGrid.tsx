@@ -69,9 +69,13 @@ export function AdvantageGrid() {
           <h2 className="font-headline text-4xl md:text-5xl font-bold mb-6">
             The <span className="text-primary">Reclaimpage</span> Advantage
           </h2>
-          <p className="text-slate-400 text-lg">
-            platform dedicated to resolving Web3 issues. From smart contract vulnerabilities and blockchain rectification and dApp troubleshooting, we deliver fast, secure, and automated solutions.
+          <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+            A premier enterprise-grade platform specializing in the comprehensive resolution of Web3 operational challenges. From identifying smart contract vulnerabilities to executing blockchain rectifications and complex dApp troubleshooting, we deliver rapid, secure, and automated infrastructure solutions for the decentralized ecosystem.
           </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-[0.2em] animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            Make Your Selection Below
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
