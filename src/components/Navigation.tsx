@@ -17,17 +17,11 @@ export function Navigation() {
             </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-slate-300">
-            <Link href="#advantage" className="hover:text-primary transition-colors">Features</Link>
-            <Link href="#flow" className="hover:text-primary transition-colors">Flow</Link>
-            <Link href="#roadmap" className="hover:text-primary transition-colors">Roadmap</Link>
-            <Link href="#architecture" className="hover:text-primary transition-colors">Architecture</Link>
-            <Link href="#routing" className="hover:text-primary transition-colors font-semibold text-primary">Routing Tool</Link>
-          </nav>
-
-          <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
-            Connect Wallet
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
+              Connect Wallet
+            </Button>
+          </div>
         </div>
       </div>
     </header>
