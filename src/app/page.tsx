@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
+import { CryptoTicker } from "@/components/CryptoTicker";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
 
       <div className="relative z-10">
         <Navigation />
+        <CryptoTicker />
         <main>
           <AdvantageGrid />
         </main>
