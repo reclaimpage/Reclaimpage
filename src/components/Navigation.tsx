@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { WalletModal } from "@/components/WalletModal";
 
 export function Navigation() {
   return (
@@ -18,9 +19,11 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
-              Connect Wallet
-            </Button>
+            <WalletModal>
+              <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
+                Connect Wallet
+              </Button>
+            </WalletModal>
           </div>
         </div>
       </div>
