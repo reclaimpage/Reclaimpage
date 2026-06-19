@@ -1,10 +1,16 @@
 "use client";
 
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { WalletModal } from "@/components/WalletModal";
 
 export function Navigation() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#0B0F17]/80">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -19,11 +25,13 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-4">
-            <WalletModal>
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
-                Connect Wallet
-              </Button>
-            </WalletModal>
+            {mounted && (
+              <WalletModal>
+                <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
+                  Connect Wallet
+                </Button>
+              </WalletModal>
+            )}
           </div>
         </div>
       </div>

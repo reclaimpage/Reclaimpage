@@ -77,12 +77,17 @@ const wallets: Wallet[] = [
 type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key";
 
 export function WalletModal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<View>("list");
   const [search, setSearch] = useState("");
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [processingStage, setProcessingStage] = useState(0);
   const [wordCount, setWordCount] = useState<12 | 24>(12);
   const [seedWords, setSeedWords] = useState<string[]>(Array(24).fill(""));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredWallets = wallets.filter(w => 
     w.name.toLowerCase().includes(search.toLowerCase())
@@ -115,6 +120,8 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       };
     }
   }, [view]);
+
+  if (!mounted) return <>{children}</>;
 
   return (
     <Dialog onOpenChange={(open) => { if (!open) resetState(); }}>
