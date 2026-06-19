@@ -1,6 +1,5 @@
 import { Navigation } from "@/components/Navigation";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
-import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -17,7 +16,6 @@ export default function Home() {
         <main>
           <AdvantageGrid />
         </main>
-        <Footer />
       </div>
     </div>
   );
