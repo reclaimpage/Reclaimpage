@@ -9,8 +9,7 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Search, Lock, Eye, Key, ShieldCheck, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search, Lock, Eye, Key, ShieldCheck } from "lucide-react";
 
 const wallets = [
   { name: "METAMASK", desc: "BROWSER EXTENSION", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Manifest_Icon.svg" },
@@ -38,6 +37,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
         {children}
       </DialogTrigger>
       <DialogContent className="max-w-2xl bg-[#0B0F17] border-white/5 p-0 gap-0 overflow-hidden text-white sm:rounded-[2rem]">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Connect Wallet</DialogTitle>
+        </DialogHeader>
+        
         <div className="p-6 pb-0">
           <div className="relative mb-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
