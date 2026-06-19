@@ -1,16 +1,15 @@
-
 {
   "placeholderImages": [
     {
       "id": "hero-dashboard",
       "description": "High-fidelity Web3 analytics dashboard showing portfolio performance and asset growth metrics.",
-      "imageUrl": "https://picsum.photos/seed/chainnova-dashboard/800/600",
+      "imageUrl": "https://picsum.photos/seed/reclaimpage-dashboard/800/600",
       "imageHint": "blockchain dashboard"
     },
     {
       "id": "technical-viz",
       "description": "Abstract technical visualization of secure network nodes and architectural connections.",
-      "imageUrl": "https://picsum.photos/seed/chainnova-tech/600/400",
+      "imageUrl": "https://picsum.photos/seed/reclaimpage-tech/600/400",
       "imageHint": "network architecture"
     }
   ]

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -10,8 +9,8 @@ export function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-20">
           <div className="lg:col-span-2">
             <div className="font-headline text-3xl font-black tracking-tighter mb-6 flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black text-lg">C</div>
-               Chainnova
+               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black text-lg">R</div>
+               Reclaimpage
             </div>
             <p className="text-slate-400 leading-relaxed max-w-md">
               Enterprise-grade decentralized infrastructure designed for secure, scalable, and intelligent Web3 operations. Empowering the next generation of digital finance.
@@ -51,7 +50,7 @@ export function Footer() {
 
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between gap-6 items-center">
           <span className="text-slate-500 text-xs font-medium">
-            © 2025 Chainnova Infrastructure Group. All rights reserved.
+            © 2025 Reclaimpage Infrastructure Group. All rights reserved.
           </span>
           <div className="flex gap-8 text-xs font-medium text-slate-500">
             <Link href="#" className="hover:text-primary">Privacy Policy</Link>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Shield, Zap, RefreshCw, UserCheck, Settings, FileCheck, LifeBuoy, Box, BarChart3 } from "lucide-react";
@@ -17,11 +16,11 @@ const features = [
 
 export function AdvantageGrid() {
   return (
-    <section id="advantage" class="py-24 lg:py-32 bg-obsidian relative">
+    <section id="advantage" className="py-24 lg:py-32 bg-obsidian relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="font-headline text-4xl md:text-5xl font-bold mb-6">
-            The Chainnova Advantage
+            The Reclaimpage Advantage
           </h2>
           <p className="text-slate-400 text-lg">
             Comprehensive tooling designed for scalable Web3 operations, automation, security, compliance, and asset intelligence.

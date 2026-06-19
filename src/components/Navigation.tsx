@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -11,10 +10,10 @@ export function Navigation() {
         <div className="h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center font-bold text-black font-headline">
-              C
+              R
             </div>
             <span className="font-headline text-xl font-bold tracking-tight">
-              Chainnova
+              Reclaimpage
             </span>
           </div>
 

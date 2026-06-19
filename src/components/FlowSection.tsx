@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -17,7 +16,7 @@ export function FlowSection() {
     <section id="flow" className="py-24 lg:py-32 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center mb-24">
-          <h2 className="font-headline text-4xl md:text-5xl font-bold mb-4">The Chainnova Flow</h2>
+          <h2 className="font-headline text-4xl md:text-5xl font-bold mb-4">The Reclaimpage Flow</h2>
           <p className="text-slate-400">Streamlined onboarding for complex operations.</p>
         </div>
 

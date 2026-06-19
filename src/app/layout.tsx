@@ -1,9 +1,8 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Chainnova — Next Generation Web3 Infrastructure',
+  title: 'Reclaimpage — Next Generation Web3 Infrastructure',
   description: 'Enterprise-grade decentralized infrastructure designed for secure, scalable, and intelligent Web3 operations.',
 };
 
