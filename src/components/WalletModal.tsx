@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { 
   Dialog, 
   DialogContent, 
@@ -58,8 +59,15 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 key={wallet.name}
                 className="flex items-center gap-4 p-4 rounded-xl bg-[#0D161F]/50 border border-white/5 hover:border-primary/30 hover:bg-[#131C26] transition-all group text-left"
               >
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center p-2">
-                   <div className="w-full h-full bg-slate-700 rounded-sm opacity-50 flex items-center justify-center text-[10px] font-bold">W</div>
+                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center p-1.5 relative shrink-0">
+                  <div className="w-full h-full relative">
+                    <Image 
+                      src={wallet.icon} 
+                      alt={wallet.name}
+                      fill
+                      className="object-contain p-0.5"
+                    />
+                  </div>
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-headline font-bold tracking-tight">{wallet.name}</div>
