@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -20,7 +19,7 @@ export default function AdminLoginPage() {
     const checkUser = async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
-        router.push("/admin");
+        router.replace("/admin");
       }
     };
     checkUser();
@@ -28,12 +27,13 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
     try {
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
       });
 
       if (error) {
@@ -42,8 +42,13 @@ export default function AdminLoginPage() {
           title: "Authentication Failed",
           description: error.message,
         });
-      } else {
-        router.push("/admin");
+      } else if (data.session) {
+        toast({
+          title: "Access Granted",
+          description: "Initializing secure session...",
+        });
+        // Use replace and refresh to ensure session is recognized
+        router.replace("/admin");
         router.refresh();
       }
     } catch (err: any) {

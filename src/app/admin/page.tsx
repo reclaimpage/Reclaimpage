@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 import { 
@@ -54,11 +53,29 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
+  const fetchSubmissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabaseClient
+        .from("wallet_submissions")
+        .select("*")
+        .order("timestamp", { ascending: false });
+
+      if (!error && data) {
+        setSubmissions(data);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
-        router.push("/admin/login");
+        router.replace("/admin/login");
       } else {
         setAuthLoading(false);
         fetchSubmissions();
@@ -66,7 +83,14 @@ export default function AdminPage() {
     };
     checkAuth();
 
-    // Real-time subscription
+    // Listen for auth changes to handle external sign-outs or session expiry
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.replace("/admin/login");
+      }
+    });
+
+    // Real-time subscription for data
     const channel = supabaseClient
       .channel('schema-db-changes')
       .on(
@@ -77,26 +101,14 @@ export default function AdminPage() {
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       supabaseClient.removeChannel(channel);
     };
-  }, [router]);
-
-  const fetchSubmissions = async () => {
-    setLoading(true);
-    const { data, error } = await supabaseClient
-      .from("wallet_submissions")
-      .select("*")
-      .order("timestamp", { ascending: false });
-
-    if (!error && data) {
-      setSubmissions(data);
-    }
-    setLoading(false);
-  };
+  }, [router, fetchSubmissions]);
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();
-    router.push("/admin/login");
+    router.replace("/admin/login");
   };
 
   if (authLoading) {
