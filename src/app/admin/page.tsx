@@ -1,6 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 import { 
   Table, 
@@ -22,8 +24,9 @@ import {
   Terminal, 
   Wallet, 
   Clock,
-  ExternalLink,
-  Lock
+  Lock,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +35,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Submission {
   id: string;
@@ -44,9 +48,38 @@ interface Submission {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        router.push("/admin/login");
+      } else {
+        setAuthLoading(false);
+        fetchSubmissions();
+      }
+    };
+    checkAuth();
+
+    // Real-time subscription
+    const channel = supabaseClient
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'wallet_submissions' },
+        () => fetchSubmissions()
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [router]);
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -61,23 +94,18 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchSubmissions();
-    
-    // Set up real-time subscription
-    const channel = supabaseClient
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'wallet_submissions' },
-        () => fetchSubmissions()
-      )
-      .subscribe();
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    router.push("/admin/login");
+  };
 
-    return () => {
-      supabaseClient.removeChannel(channel);
-    };
-  }, []);
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0B0F17] flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary w-12 h-12" />
+      </div>
+    );
+  }
 
   const stats = {
     total: submissions.length,
@@ -107,7 +135,15 @@ export default function AdminPage() {
               onClick={fetchSubmissions}
             >
               <RefreshCw size={18} className={loading ? "animate-spin mr-2" : "mr-2"} />
-              Refresh Data
+              Refresh
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="h-11 px-6 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
+              onClick={handleLogout}
+            >
+              <LogOut size={18} className="mr-2" />
+              Secure Logout
             </Button>
           </div>
         </div>
