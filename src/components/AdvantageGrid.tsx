@@ -70,7 +70,7 @@ export function AdvantageGrid() {
             The <span className="text-primary">Reclaimpage</span> Advantage
           </h2>
           <p className="text-slate-400 text-lg">
-            A comprehensive suite of verified and scalable tools designed to simplify your Web3 operations.
+            platform dedicated to resolving Web3 issues. From smart contract vulnerabilities and blockchain rectification and dApp troubleshooting, we deliver fast, secure, and automated solutions.
           </p>
         </div>
 
