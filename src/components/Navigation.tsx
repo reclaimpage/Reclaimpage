@@ -26,7 +26,7 @@ export function Navigation() {
           </nav>
 
           <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
-            Launch App
+            Connect Wallet
           </Button>
         </div>
       </div>

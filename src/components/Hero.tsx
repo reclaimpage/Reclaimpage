@@ -1,10 +1,8 @@
-
 "use client";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, ShieldCheck } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 const data = [
@@ -42,7 +40,7 @@ export function Hero() {
 
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
               <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-bold h-14 px-8 rounded-xl shadow-neon">
-                Get Started
+                Connect Wallet
               </Button>
               <Button size="lg" variant="outline" className="glass h-14 px-8 rounded-xl border-white/10 hover:border-primary/50 text-white">
                 Explore Ecosystem
