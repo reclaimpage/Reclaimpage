@@ -17,6 +17,16 @@ const wallets = [
   { name: "PHANTOM", desc: "BROWSER EXTENSION", e2e: true, icon: "https://phantom.app/img/logo.png" },
   { name: "COINBASE WALLET", desc: "MOBILE/DESKTOP", e2e: true, icon: "https://upload.wikimedia.org/wikipedia/commons/d/de/Coinbase_Logo_2021.svg" },
   { name: "TRUST WALLET", desc: "MOBILE", e2e: true, icon: "https://trustwallet.com/assets/images/media/assets/trust_wallet_logo.svg" },
+  { name: "PETRA", desc: "BROWSER EXTENSION", e2e: true, icon: "https://petra.app/favicon.ico" },
+  { name: "MARTIAN", desc: "BROWSER EXTENSION", e2e: true, icon: "https://martianwallet.xyz/favicon.ico" },
+  { name: "SUI WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://sui.io/favicon.png" },
+  { name: "CORE", desc: "EXTENSION/MOBILE", e2e: true, icon: "https://core.app/favicon.ico" },
+  { name: "EXODUS", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://www.exodus.com/favicon.ico" },
+  { name: "KEPLR", desc: "BROWSER EXTENSION", e2e: true, icon: "https://www.keplr.app/favicon.ico" },
+  { name: "ATOMIC WALLET", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://atomicwallet.io/favicon.ico" },
+  { name: "LEAP COSMOS", desc: "BROWSER EXTENSION", e2e: true, icon: "https://www.leapwallet.io/favicon.ico" },
+  { name: "CAKE WALLET", desc: "MOBILE", e2e: true, icon: "https://cakewallet.com/favicon.ico" },
+  { name: "GUARDA", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://guarda.com/favicon.ico" },
   { name: "BINANCE WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://bin.bnbstatic.com/static/images/home/binance-logo.png" },
   { name: "OKX WALLET", desc: "MOBILE/EXTENSION", e2e: true, icon: "https://www.okx.com/cdn/assets/imgs/221/9E9A9B4B8B6A4A9C.png" },
   { name: "SOLFLARE", desc: "EXTENSION/MOBILE", e2e: true, icon: "https://solflare.com/assets/logo.svg" },
@@ -59,24 +69,28 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 key={wallet.name}
                 className="flex items-center gap-4 p-4 rounded-xl bg-[#0D161F]/50 border border-white/5 hover:border-primary/30 hover:bg-[#131C26] transition-all group text-left"
               >
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center p-1.5 relative shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center p-1.5 relative shrink-0">
                   <div className="w-full h-full relative">
                     <Image 
                       src={wallet.icon} 
                       alt={wallet.name}
                       fill
                       className="object-contain p-0.5"
+                      unoptimized={wallet.icon.endsWith('.svg') || wallet.icon.endsWith('.ico')}
                     />
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-headline font-bold tracking-tight">{wallet.name}</div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{wallet.desc}</span>
                     {wallet.e2e && (
-                      <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
-                        <Lock size={8} /> E2E
-                      </span>
+                      <>
+                        <span className="text-[10px] text-slate-500">•</span>
+                        <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
+                          <Lock size={8} /> E2E
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
