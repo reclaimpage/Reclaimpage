@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
+import { Navigation } from "@/components/Navigation";
 import { ShieldAlert, Clock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -82,6 +83,7 @@ export default async function SecurePortalPage({ params }: PageProps) {
       </div>
 
       <div className="relative z-10">
+        <Navigation />
         <main>
           <AdvantageGrid />
         </main>
