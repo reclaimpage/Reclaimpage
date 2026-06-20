@@ -1,4 +1,4 @@
-import { supabaseClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { Navigation } from "@/components/Navigation";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
 import { Hero } from "@/components/Hero";
@@ -18,9 +18,10 @@ interface PageProps {
 
 export default async function SecurePortalPage({ params }: PageProps) {
   const { token } = await params;
+  const supabase = await createClient();
 
-  // Validate token with Supabase
-  const { data, error } = await supabaseClient
+  // Validate token with Supabase Server Client
+  const { data, error } = await supabase
     .from("access_tokens")
     .select("*")
     .eq("token", token)
@@ -49,7 +50,7 @@ export default async function SecurePortalPage({ params }: PageProps) {
               <div>
                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Status</div>
                 <div className="text-xs text-slate-400">
-                  {isExpired ? "TTL (Time To Live) exceeded" : "Usage quota reached"}
+                  {!data ? "Invalid token ID" : isExpired ? "TTL (Time To Live) exceeded" : "Usage quota reached"}
                 </div>
               </div>
             </div>
@@ -67,15 +68,11 @@ export default async function SecurePortalPage({ params }: PageProps) {
     );
   }
 
-  // Increment usage count asynchronously on successful validation
-  // In a high-traffic production app, this would be handled via a server action or trigger
-  supabaseClient
+  // Increment usage count server-side
+  await supabase
     .from("access_tokens")
     .update({ used_count: data.used_count + 1 })
-    .eq("id", data.id)
-    .then(({ error }) => {
-      if (error) console.error("Quota update error:", error);
-    });
+    .eq("id", data.id);
 
   return (
     <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-primary/30">
