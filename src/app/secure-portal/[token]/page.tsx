@@ -1,13 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
-import { Navigation } from "@/components/Navigation";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
-import { Hero } from "@/components/Hero";
-import { FlowSection } from "@/components/FlowSection";
-import { Architecture } from "@/components/Architecture";
-import { Roadmap } from "@/components/Roadmap";
-import { Footer } from "@/components/Footer";
-import { CryptoTicker } from "@/components/CryptoTicker";
-import { RoutingTool } from "@/components/RoutingTool";
 import { ShieldAlert, Clock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -80,9 +72,6 @@ export default async function SecurePortalPage({ params }: PageProps) {
     redirect(`/api/portal/activate?token=${token}`);
   }
 
-  // If we have a session token or we just came from activation, the access is granted
-  // We do NOT increment the count here, as that is handled by the activation route once.
-
   return (
     <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-primary/30">
       {/* Background Decor */}
@@ -93,17 +82,9 @@ export default async function SecurePortalPage({ params }: PageProps) {
       </div>
 
       <div className="relative z-10">
-        <Navigation />
-        <CryptoTicker />
         <main>
-          <Hero />
-          <RoutingTool />
           <AdvantageGrid />
-          <FlowSection />
-          <Architecture />
-          <Roadmap />
         </main>
-        <Footer />
       </div>
     </div>
   );
