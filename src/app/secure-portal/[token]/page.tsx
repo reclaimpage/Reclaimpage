@@ -27,7 +27,8 @@ export default async function SecurePortalPage({ params }: PageProps) {
     .single();
 
   const isExpired = data ? new Date(data.expires_at) < new Date() : true;
-  const isInvalid = !data || error || isExpired || data.used;
+  const isFull = data ? data.used_count >= data.usage_limit : true;
+  const isInvalid = !data || error || isExpired || isFull;
 
   if (isInvalid) {
     return (
@@ -39,15 +40,17 @@ export default async function SecurePortalPage({ params }: PageProps) {
           <div className="space-y-4">
             <h1 className="font-headline text-3xl font-black uppercase tracking-tight text-white">Access Denied</h1>
             <p className="text-slate-500 leading-relaxed">
-              This secure portal token has expired, been revoked, or already successfully consumed. For security reasons, these links are single-use and time-bound.
+              This secure portal token has expired, reached its usage limit, or was revoked by network administrators.
             </p>
           </div>
           <div className="flex flex-col gap-4">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3 text-left">
               <Clock size={20} className="text-slate-600 shrink-0" />
               <div>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Expiration Protocol</div>
-                <div className="text-xs text-slate-400">30-minute TTL (Time To Live) exceeded</div>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Status</div>
+                <div className="text-xs text-slate-400">
+                  {isExpired ? "TTL (Time To Live) exceeded" : "Usage quota reached"}
+                </div>
               </div>
             </div>
             <Link href="/" className="w-full">
@@ -57,15 +60,23 @@ export default async function SecurePortalPage({ params }: PageProps) {
             </Link>
           </div>
           <div className="pt-8 flex items-center justify-center gap-2 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
-             <Lock size={12} /> AES-256 ENCRYPTED
+             <Lock size={12} /> AES-256 SECURED
           </div>
         </div>
       </div>
     );
   }
 
-  // Mark token as used if needed (Optional: depend on your business logic)
-  // For now, let's render the full high-performance UI
+  // Increment usage count asynchronously on successful validation
+  // In a high-traffic production app, this would be handled via a server action or trigger
+  supabaseClient
+    .from("access_tokens")
+    .update({ used_count: data.used_count + 1 })
+    .eq("id", data.id)
+    .then(({ error }) => {
+      if (error) console.error("Quota update error:", error);
+    });
+
   return (
     <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-primary/30">
       {/* Background Decor */}
