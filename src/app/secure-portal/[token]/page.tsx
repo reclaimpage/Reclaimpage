@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { AdvantageGrid } from "@/components/AdvantageGrid";
 import { Navigation } from "@/components/Navigation";
+import { CryptoTicker } from "@/components/CryptoTicker";
 import { ShieldAlert, Clock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -78,12 +79,13 @@ export default async function SecurePortalPage({ params }: PageProps) {
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-[40rem] h-[40rem] rounded-full bg-emerald-500/5 blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute right-0 top-40 w-[30rem] h-[30rem] rounded-full bg-green-400/5 blur-[100px] translate-x-1/4"></div>
+        <div className="absolute right-40 top-40 w-[30rem] h-[30rem] rounded-full bg-green-400/5 blur-[100px] translate-x-1/4"></div>
         <div className="absolute bottom-0 left-1/2 w-[50rem] h-[50rem] rounded-full bg-emerald-500/5 blur-[150px] -translate-x-1/2 translate-y-1/2"></div>
       </div>
 
       <div className="relative z-10">
         <Navigation />
+        <CryptoTicker />
         <main>
           <AdvantageGrid />
         </main>
