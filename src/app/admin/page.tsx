@@ -25,7 +25,10 @@ import {
   Clock,
   Lock,
   LogOut,
-  Loader2
+  Loader2,
+  Link as LinkIcon,
+  Copy,
+  CheckCircle
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +38,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface Submission {
   id: string;
@@ -52,6 +56,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true);
@@ -83,14 +89,12 @@ export default function AdminPage() {
     };
     checkAuth();
 
-    // Listen for auth changes to handle external sign-outs or session expiry
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         router.replace("/admin/login");
       }
     });
 
-    // Real-time subscription for data
     const channel = supabaseClient
       .channel('schema-db-changes')
       .on(
@@ -105,6 +109,45 @@ export default function AdminPage() {
       supabaseClient.removeChannel(channel);
     };
   }, [router, fetchSubmissions]);
+
+  const generateSecureLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 mins
+
+      const { error } = await supabaseClient
+        .from("access_tokens")
+        .insert([{ token, expires_at: expiresAt }]);
+
+      if (error) throw error;
+
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const link = `${baseUrl}/secure-portal/${token}`;
+      setGeneratedLink(link);
+      
+      toast({
+        title: "Secure Link Generated",
+        description: "Valid for 30 minutes. Single-use enforcement active.",
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Link Generation Failed",
+        description: err.message,
+      });
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to clipboard",
+      description: "Secure URL ready for transmission.",
+    });
+  };
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();
@@ -159,6 +202,48 @@ export default function AdminPage() {
             </Button>
           </div>
         </div>
+
+        {/* Link Generator Section */}
+        <Card className="glass border-primary/20 bg-primary/5 rounded-[2.5rem] overflow-hidden">
+          <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-2 text-center md:text-left">
+              <div className="flex items-center gap-2 text-primary font-headline font-black uppercase tracking-[0.2em] text-xs">
+                <LinkIcon size={14} /> Dynamic Portal Engine
+              </div>
+              <h3 className="text-2xl font-headline font-bold">Generate Secure Single-Use Access</h3>
+              <p className="text-slate-400 text-sm max-w-md">Creates a cryptographically unique URL that self-destructs after 30 minutes or upon first successful handshake.</p>
+            </div>
+            
+            <div className="flex flex-col gap-4 w-full md:w-auto">
+              {!generatedLink ? (
+                <Button 
+                  onClick={generateSecureLink}
+                  disabled={generatingLink}
+                  className="h-14 px-8 bg-primary text-black font-black uppercase tracking-widest rounded-2xl shadow-neon hover:scale-[1.02] transition-all"
+                >
+                  {generatingLink ? <Loader2 className="animate-spin mr-2" /> : <Lock size={18} className="mr-2" />}
+                  Generate Access Link
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="bg-black/40 border border-primary/30 p-4 rounded-2xl flex items-center justify-between gap-4 font-mono text-[10px] text-primary">
+                    <span className="truncate max-w-[200px]">{generatedLink}</span>
+                    <button onClick={() => copyToClipboard(generatedLink)} className="hover:text-white transition-colors">
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setGeneratedLink(null)}
+                    className="h-10 text-[10px] uppercase font-black tracking-widest border-white/5 bg-white/5"
+                  >
+                    Reset Generator
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
