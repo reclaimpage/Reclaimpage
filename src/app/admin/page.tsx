@@ -36,7 +36,8 @@ import {
   Activity,
   Trash2,
   Calendar as CalendarIcon,
-  Clock
+  Clock,
+  Key
 } from "lucide-react";
 import {
   Dialog,
