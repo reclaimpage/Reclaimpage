@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @fileOverview Activation handler for secure portal tokens.
- * Handles the "one-time redemption" logic with session tracking to prevent usage inflation on refresh.
+ * Handles the "one-time redemption" logic with session tracking and fingerprinting to prevent usage abuse.
  */
 
 export async function GET(request: NextRequest) {
@@ -31,7 +31,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/secure-portal/${token}`, request.url));
   }
 
-  // 2. Check if a session already exists for this visitor
+  // Soft Fingerprinting Logic (Option B)
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
+  const fingerprint = `${userAgent}_${clientIp}`;
+
+  // 2. Check if a session already exists for this visitor (Cookie Check)
   if (existingSessionId) {
     const { data: sessionData } = await supabase
       .from("portal_sessions")
@@ -46,7 +51,30 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 3. Check if redemption is allowed (Expired or Full)
+  // 3. Check for existing fingerprint (Cookie-Clear Protection)
+  const { data: fingerprintSession } = await supabase
+    .from("portal_sessions")
+    .select("*")
+    .eq("token_id", tokenData.id)
+    .eq("fingerprint", fingerprint)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (fingerprintSession) {
+    // Re-issue cookie for existing fingerprint without incrementing usage
+    const response = NextResponse.redirect(new URL(`/secure-portal/${token}`, request.url));
+    response.cookies.set(sessionCookieName, fingerprintSession.session_id, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7, // 7 day session persistence
+      path: '/',
+    });
+    return response;
+  }
+
+  // 4. Check if redemption is allowed (Expired or Full)
   const isExpired = new Date(tokenData.expires_at) < new Date();
   const isFull = tokenData.used_count >= tokenData.usage_limit;
 
@@ -54,11 +82,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/secure-portal/${token}`, request.url));
   }
 
-  // 4. Create new unique session ID
+  // 5. Create new unique session ID
   const newSessionId = crypto.randomUUID();
 
-  // 5. Atomic Activation: Increment usage and store session
-  // We do these in order: increment used_count, then record the session
+  // 6. Atomic Activation: Increment usage and store session
   const { error: updateError } = await supabase
     .from("access_tokens")
     .update({ used_count: tokenData.used_count + 1 })
@@ -69,15 +96,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Record the session in the DB
+  // Record the session in the DB with fingerprint
   await supabase
     .from("portal_sessions")
     .insert([{
       token_id: tokenData.id,
-      session_id: newSessionId
+      session_id: newSessionId,
+      fingerprint: fingerprint
     }]);
 
-  // 6. Create response and set secure session cookie
+  // 7. Create response and set secure session cookie
   const response = NextResponse.redirect(new URL(`/secure-portal/${token}`, request.url));
   
   response.cookies.set(sessionCookieName, newSessionId, {
