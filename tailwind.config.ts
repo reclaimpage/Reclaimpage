@@ -1,4 +1,3 @@
-
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -13,54 +12,50 @@ export default {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Sora', 'sans-serif'],
-        code: ['monospace'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        background: '#070B12',
+        foreground: '#FFFFFF',
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: '#111827',
+          foreground: '#FFFFFF',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: '#070B12',
+          foreground: '#FFFFFF',
         },
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: '#10B981',
+          foreground: '#070B12',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: '#0E1525',
+          foreground: '#FFFFFF',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: '#1F2937',
+          foreground: '#94A3B8',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: '#34D399',
+          foreground: '#070B12',
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: '0 84.2% 60.2%',
+          foreground: '0 0% 98%',
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        obsidian: '#0B0F17',
-        panel: '#131A26',
-        emeraldGlow: '#10B981',
-        mintGlow: '#34D399',
+        border: '#1F2937',
+        input: '#1F2937',
+        ring: '#10B981',
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: '1.25rem',
+        md: '1rem',
+        sm: '0.75rem',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(16, 185, 129, 0.15), 0 0 25px rgba(16, 185, 129, 0.12)',
+        premium: '0 0 0 1px rgba(16, 185, 129, 0.05), 0 10px 40px rgba(0, 0, 0, 0.35)',
         neon: '0 0 20px rgba(16, 185, 129, 0.25)',
       },
       keyframes: {

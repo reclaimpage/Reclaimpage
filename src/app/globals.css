@@ -1,30 +1,29 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 220 37% 7%;
+    --background: 222 47% 5%;
     --foreground: 0 0% 100%;
-    --card: 220 32% 11%;
+    --card: 222 47% 7%;
     --card-foreground: 0 0% 100%;
-    --popover: 220 37% 7%;
+    --popover: 222 47% 5%;
     --popover-foreground: 0 0% 100%;
     --primary: 161 72% 39%;
-    --primary-foreground: 220 37% 7%;
-    --secondary: 220 32% 16%;
+    --primary-foreground: 222 47% 5%;
+    --secondary: 222 47% 11%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 32% 16%;
+    --muted: 222 47% 11%;
     --muted-foreground: 215 20% 65%;
     --accent: 158 64% 52%;
-    --accent-foreground: 220 37% 7%;
+    --accent-foreground: 222 47% 5%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
+    --border: 217 19% 18%;
+    --input: 217 19% 18%;
     --ring: 161 72% 39%;
-    --radius: 1rem;
+    --radius: 1.25rem;
   }
 }
 
@@ -34,14 +33,15 @@
   }
   body {
     @apply bg-background text-foreground font-body antialiased selection:bg-primary/30;
-    background-color: #0B0F17;
+    background-color: #070B12;
   }
 }
 
 .glass {
-  background: rgba(19, 26, 38, 0.72);
-  backdrop-filter: blur(18px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.02), 0 10px 40px rgba(0, 0, 0, 0.35);
 }
 
 .glow-border {
@@ -56,9 +56,9 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.4),
+    rgba(16, 185, 129, 0.2),
     transparent,
-    rgba(52, 211, 153, 0.15)
+    rgba(52, 211, 153, 0.1)
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -67,11 +67,19 @@
 }
 
 .grid-pattern {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
-.hero-orb {
-  filter: blur(120px);
+.emerald-gradient-bg {
+  background: linear-gradient(135deg, #10B981, #34D399, #6EE7B7);
+}
+
+.shadow-neon {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+.shadow-premium {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.05), 0 10px 40px rgba(0, 0, 0, 0.35);
 }

@@ -12,14 +12,14 @@ export function Navigation() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#0B0F17]/80">
+    <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-[#070B12]/80">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center font-bold text-black font-headline">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center font-bold text-[#070B12] font-headline shadow-neon">
               R
             </div>
-            <span className="font-headline text-xl font-bold tracking-tight">
+            <span className="font-headline text-xl font-bold tracking-tight text-white">
               Reclaimpage
             </span>
           </div>
@@ -27,7 +27,7 @@ export function Navigation() {
           <div className="flex items-center gap-4">
             {mounted && (
               <WalletModal>
-                <Button className="bg-gradient-to-r from-emerald-500 to-green-400 text-black font-semibold rounded-xl hover:scale-[1.02] transition-transform">
+                <Button className="bg-gradient-to-r from-[#10B981] to-[#34D399] text-[#070B12] font-bold rounded-xl hover:scale-[1.02] transition-all shadow-neon">
                   Connect Wallet
                 </Button>
               </WalletModal>
