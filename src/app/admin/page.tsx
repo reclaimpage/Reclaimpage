@@ -173,7 +173,7 @@ export default function AdminPage() {
       const fileName = `logo-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabaseClient.storage
+      const { error: uploadError } = await supabaseClient.storage
         .from('branding')
         .upload(filePath, file);
 
