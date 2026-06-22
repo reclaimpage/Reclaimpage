@@ -145,7 +145,19 @@ insert into app_settings (key, value) values ('logo_url', '') on conflict (key) 
 
 ---
 
-## 3. Deployment Notes
+## 3. Storage Configuration
+
+To support logo uploads, you must configure a storage bucket in Supabase:
+
+1. **Create Bucket**: Create a bucket named `branding`.
+2. **Privacy**: Set the bucket to **Public**.
+3. **Storage Policies**: Add the following policies to the `storage.objects` table:
+   - **Select**: Allow public access to read objects.
+   - **Insert/Update**: Allow authenticated users to upload/update files in the `branding` bucket.
+
+---
+
+## 4. Deployment Notes
 
 - Ensure you run the SQL script above in your Supabase Dashboard.
 - RLS must be enabled for all tables to protect sensitive data.

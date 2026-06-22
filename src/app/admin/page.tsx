@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 import { 
@@ -39,7 +39,8 @@ import {
   Clock,
   Key,
   Palette,
-  CheckCircle2
+  CheckCircle2,
+  Upload
 } from "lucide-react";
 import {
   Dialog,
@@ -76,6 +77,7 @@ type ExpiryMode = "preset" | "custom";
 
 export default function AdminPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [portals, setPortals] = useState<PortalLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,6 +95,7 @@ export default function AdminPage() {
   // Branding State
   const [logoUrl, setLogoUrl] = useState("");
   const [updatingLogo, setUpdatingLogo] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -142,19 +145,49 @@ export default function AdminPage() {
     };
   }, [router, fetchData]);
 
-  const updateBranding = async () => {
+  const updateBranding = async (url?: string) => {
     setUpdatingLogo(true);
+    const finalUrl = url ?? logoUrl;
     try {
       const { error } = await supabaseClient
         .from("app_settings")
-        .upsert({ key: "logo_url", value: logoUrl }, { onConflict: "key" });
+        .upsert({ key: "logo_url", value: finalUrl }, { onConflict: "key" });
 
       if (error) throw error;
+      setLogoUrl(finalUrl);
       toast({ title: "Branding Updated", description: "Global logo configuration has been synchronized." });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Update Failed", description: err.message });
     } finally {
       setUpdatingLogo(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `logo-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabaseClient.storage
+        .from('branding')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabaseClient.storage
+        .from('branding')
+        .getPublicUrl(filePath);
+
+      await updateBranding(publicUrl);
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload Failed", description: err.message });
+    } finally {
+      setUploadingFile(false);
     }
   };
 
@@ -419,22 +452,39 @@ export default function AdminPage() {
                   <Palette size={14} /> Brand Configuration
                 </div>
                 <CardTitle className="font-headline text-2xl font-bold">Dynamic Logo Control</CardTitle>
-                <CardDescription className="text-slate-500">Update the visual identity of your dApp globally.</CardDescription>
+                <CardDescription className="text-slate-500">Update the visual identity of your dApp globally. Icons are stored in the Supabase 'branding' bucket.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                   <div className="flex-1 w-full space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">dApp Logo URL</label>
-                      <Input 
-                        placeholder="https://example.com/logo.png" 
-                        value={logoUrl}
-                        onChange={(e) => setLogoUrl(e.target.value)}
-                        className="bg-black/40 border-white/5 h-12 rounded-xl text-xs font-mono"
-                      />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">dApp Logo Source</label>
+                      <div className="flex gap-2">
+                         <Input 
+                          placeholder="https://example.com/logo.png" 
+                          value={logoUrl}
+                          onChange={(e) => setLogoUrl(e.target.value)}
+                          className="bg-black/40 border-white/5 h-12 rounded-xl text-xs font-mono"
+                        />
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleFileUpload} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                        <Button 
+                          onClick={() => fileInputRef.current?.click()} 
+                          disabled={uploadingFile}
+                          variant="outline"
+                          className="h-12 w-12 rounded-xl bg-white/5 border-white/5 hover:bg-white/10"
+                        >
+                          {uploadingFile ? <Loader2 className="animate-spin" /> : <Upload size={18} />}
+                        </Button>
+                      </div>
                     </div>
                     <Button 
-                      onClick={updateBranding}
+                      onClick={() => updateBranding()}
                       disabled={updatingLogo}
                       className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest rounded-xl border border-white/5 transition-all"
                     >
