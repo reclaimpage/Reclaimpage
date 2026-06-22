@@ -80,7 +80,7 @@ export function AdvantageGrid() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, i) => (
-            <WalletModal key={feature.title} featureTitle={feature.title}>
+            <WalletModal key={`${feature.title}-${i}`} featureTitle={feature.title}>
               <button className="glass group p-8 rounded-[2rem] hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.02] text-left w-full focus:outline-none focus:ring-2 focus:ring-[#10B981]/30">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#10B981]/20 to-transparent flex items-center justify-center mb-6 border border-white/5 group-hover:border-[#10B981]/30 transition-all duration-300">
                   <feature.icon className="text-[#10B981] w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
