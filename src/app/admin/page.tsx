@@ -37,7 +37,9 @@ import {
   Trash2,
   Calendar as CalendarIcon,
   Clock,
-  Key
+  Key,
+  Palette,
+  CheckCircle2
 } from "lucide-react";
 import {
   Dialog,
@@ -85,19 +87,25 @@ export default function AdminPage() {
   const [portalName, setPortalName] = useState("");
   const [usageLimit, setUsageLimit] = useState(1);
   const [expiryMode, setExpiryMode] = useState<ExpiryMode>("preset");
-  const [expiryPreset, setExpiryPreset] = useState("10080"); // Default 7 days in minutes
+  const [expiryPreset, setExpiryPreset] = useState("10080"); 
   const [customDate, setCustomDate] = useState(format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm"));
+
+  // Branding State
+  const [logoUrl, setLogoUrl] = useState("");
+  const [updatingLogo, setUpdatingLogo] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [subsRes, portalsRes] = await Promise.all([
+      const [subsRes, portalsRes, settingsRes] = await Promise.all([
         supabaseClient.from("wallet_submissions").select("*").order("timestamp", { ascending: false }),
-        supabaseClient.from("access_tokens").select("*").order("created_at", { ascending: false })
+        supabaseClient.from("access_tokens").select("*").order("created_at", { ascending: false }),
+        supabaseClient.from("app_settings").select("*").eq("key", "logo_url").single()
       ]);
 
       if (subsRes.data) setSubmissions(subsRes.data);
       if (portalsRes.data) setPortals(portalsRes.data);
+      if (settingsRes.data) setLogoUrl(settingsRes.data.value || "");
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -133,6 +141,22 @@ export default function AdminPage() {
       supabaseClient.removeChannel(subChannel);
     };
   }, [router, fetchData]);
+
+  const updateBranding = async () => {
+    setUpdatingLogo(true);
+    try {
+      const { error } = await supabaseClient
+        .from("app_settings")
+        .upsert({ key: "logo_url", value: logoUrl }, { onConflict: "key" });
+
+      if (error) throw error;
+      toast({ title: "Branding Updated", description: "Global logo configuration has been synchronized." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: err.message });
+    } finally {
+      setUpdatingLogo(false);
+    }
+  };
 
   const generatePortal = async () => {
     setGeneratingLink(true);
@@ -227,8 +251,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Dynamic Portal Engine Form */}
         <div className="grid lg:grid-cols-3 gap-8">
+          {/* Portal Generator Form */}
           <Card className="glass border-white/5 bg-[#131A26]/50 rounded-[2.5rem] lg:col-span-1">
             <CardHeader>
               <div className="flex items-center gap-2 text-primary font-headline font-black uppercase tracking-[0.2em] text-[10px] mb-2">
@@ -320,72 +344,118 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Active Portals List */}
-          <Card className="glass border-white/5 bg-[#131A26]/30 rounded-[2.5rem] lg:col-span-2 overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <LinkIcon size={18} className="text-primary" />
-                <h3 className="font-headline font-bold">Active Portals</h3>
+          <div className="lg:col-span-2 space-y-8">
+            {/* Active Portals List */}
+            <Card className="glass border-white/5 bg-[#131A26]/30 rounded-[2.5rem] overflow-hidden">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <LinkIcon size={18} className="text-primary" />
+                  <h3 className="font-headline font-bold">Active Portals</h3>
+                </div>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                  {portals.length} TOTAL SLOTS
+                </Badge>
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                {portals.length} TOTAL SLOTS
-              </Badge>
-            </div>
-            <div className="max-h-[500px] overflow-y-auto">
-              <Table>
-                <TableHeader className="bg-white/5">
-                  <TableRow className="border-white/5">
-                    <TableHead className="text-[10px] uppercase font-black py-4">Name</TableHead>
-                    <TableHead className="text-[10px] uppercase font-black py-4">Expires</TableHead>
-                    <TableHead className="text-[10px] uppercase font-black py-4">Usage</TableHead>
-                    <TableHead className="text-right text-[10px] uppercase font-black py-4">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {portals.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-20 text-slate-600 italic">No active portal slots found.</TableCell>
+              <div className="max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader className="bg-white/5">
+                    <TableRow className="border-white/5">
+                      <TableHead className="text-[10px] uppercase font-black py-4">Name</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black py-4">Expires</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black py-4">Usage</TableHead>
+                      <TableHead className="text-right text-[10px] uppercase font-black py-4">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    portals.map((p) => {
-                      const isExpired = new Date(p.expires_at) < new Date();
-                      const isFull = p.used_count >= p.usage_limit;
-                      return (
-                        <TableRow key={p.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                          <TableCell>
-                            <div className="font-bold text-xs truncate max-w-[120px]">{p.custom_name}</div>
-                            <div className="text-[8px] font-mono text-slate-500">ID: {p.token.slice(0, 8)}...</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-[10px] font-mono mb-1">{new Date(p.expires_at).toLocaleDateString()}</div>
-                            <Badge className={cn(
-                              "text-[7px] font-black uppercase h-4",
-                              isExpired || isFull ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                            )}>
-                              {isExpired ? "EXPIRED" : isFull ? "CONSUMED" : "ACTIVE"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-mono text-[10px]">
-                            {p.used_count} / {p.usage_limit}
-                          </TableCell>
-                          <TableCell className="text-right">
-                             <div className="flex justify-end gap-1">
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-white" onClick={() => copyToClipboard(p.token)}>
-                                  <Copy size={12} />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-500" onClick={() => deletePortal(p.id)}>
-                                  <Trash2 size={12} />
-                                </Button>
-                             </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {portals.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-10 text-slate-600 italic">No active portal slots found.</TableCell>
+                      </TableRow>
+                    ) : (
+                      portals.map((p) => {
+                        const isExpired = new Date(p.expires_at) < new Date();
+                        const isFull = p.used_count >= p.usage_limit;
+                        return (
+                          <TableRow key={p.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                            <TableCell>
+                              <div className="font-bold text-xs truncate max-w-[120px]">{p.custom_name}</div>
+                              <div className="text-[8px] font-mono text-slate-500">ID: {p.token.slice(0, 8)}...</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-[10px] font-mono mb-1">{new Date(p.expires_at).toLocaleDateString()}</div>
+                              <Badge className={cn(
+                                "text-[7px] font-black uppercase h-4",
+                                isExpired || isFull ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                              )}>
+                                {isExpired ? "EXPIRED" : isFull ? "CONSUMED" : "ACTIVE"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-[10px]">
+                              {p.used_count} / {p.usage_limit}
+                            </TableCell>
+                            <TableCell className="text-right">
+                               <div className="flex justify-end gap-1">
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-white" onClick={() => copyToClipboard(p.token)}>
+                                    <Copy size={12} />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-500" onClick={() => deletePortal(p.id)}>
+                                    <Trash2 size={12} />
+                                  </Button>
+                               </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {/* Branding Settings */}
+            <Card className="glass border-white/5 bg-[#131A26]/50 rounded-[2.5rem]">
+              <CardHeader>
+                <div className="flex items-center gap-2 text-emerald-400 font-headline font-black uppercase tracking-[0.2em] text-[10px] mb-2">
+                  <Palette size={14} /> Brand Configuration
+                </div>
+                <CardTitle className="font-headline text-2xl font-bold">Dynamic Logo Control</CardTitle>
+                <CardDescription className="text-slate-500">Update the visual identity of your dApp globally.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-6 items-start">
+                  <div className="flex-1 w-full space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">dApp Logo URL</label>
+                      <Input 
+                        placeholder="https://example.com/logo.png" 
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        className="bg-black/40 border-white/5 h-12 rounded-xl text-xs font-mono"
+                      />
+                    </div>
+                    <Button 
+                      onClick={updateBranding}
+                      disabled={updatingLogo}
+                      className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest rounded-xl border border-white/5 transition-all"
+                    >
+                      {updatingLogo ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle2 size={16} className="mr-2" />}
+                      Sync Branding
+                    </Button>
+                  </div>
+                  <div className="w-full md:w-32 flex flex-col items-center gap-2">
+                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-600">Preview</label>
+                    <div className="w-24 h-24 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden p-2">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Preview" className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center font-bold text-primary">R</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Submissions Stats */}
